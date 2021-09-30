@@ -3,87 +3,50 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - '**'
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - 'master'
 
 jobs:
-  default:
-    runs-on: ubuntu-latest
-
-    steps:
-      - run: echo Build started
-
-  build-conditions:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && contains(github.event.head_commit.message, '[docker-push]')
-
-    steps:
-      - run: echo Build conditions are met
-
   build-node:
     runs-on: ubuntu-latest
     needs: build-conditions
 
     steps:
-      - uses: actions/checkout@v1
-
-      - name: Publish proxy
-        uses: elgohr/Publish-Docker-Github-Action@master
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
         with:
-          name: marvinroesch/harmony-proxy
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          cache: true
-
-      - name: Publish frontend
-        uses: elgohr/Publish-Docker-Github-Action@master
+          images: |
+            marvinroesch/harmony-bot
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master')
+        uses: docker/login-action@v1
         with:
-          name: marvinroesch/harmony-frontend
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          context: frontend
-          buildoptions: "--target prod"
-          cache: true
-
-      - name: Publish backend
-        uses: elgohr/Publish-Docker-Github-Action@master
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
         with:
-          name: marvinroesch/harmony-backend
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          context: backend
-          buildoptions: "--target prod"
-          cache: true
-
-  build-gradle:
-    runs-on: ubuntu-latest
-    needs: build-conditions
-
-    steps:
-      - uses: actions/checkout@v1
-
-      - name: Publish bot
-        uses: elgohr/Publish-Docker-Github-Action@master
-        with:
-          name: marvinroesch/harmony-bot
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          dockerfile: Dockerfile-gradle
-          buildoptions: "--target bot"
-          cache: true
-
-  build-elasticsearch:
-    runs-on: ubuntu-latest
-    needs: build-conditions
-
-    steps:
-      - uses: actions/checkout@v1
-
-      - name: Publish elasticsearch
-        uses: elgohr/Publish-Docker-Github-Action@master
-        with:
-          name: marvinroesch/harmony-elasticsearch
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          context: elastic
-          dockerfile: elastic/Dockerfile-elasticsearch
-          cache: true
+          context: .
+          push: ${{ github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master') }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
