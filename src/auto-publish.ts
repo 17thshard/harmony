@@ -180,6 +180,8 @@ export default {
             guild: message.guildId
           }
         });
+
+        return;
       }
 
       const statsKey = `${storageKey}.stats`;
