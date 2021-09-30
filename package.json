@@ -1,0 +1,47 @@
+{
+    "name": "harmony",
+    "version": "1.0.0",
+    "description": "A Discord bot for miscellaneous server management tasks.",
+    "main": "dist/bot.js",
+    "scripts": {
+        "build": "tsc",
+        "debug": "npm run build && npm run watch-debug",
+        "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet",
+        "lint:fix": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
+        "run-debug": "nodemon --inspect dist/bot.js",
+        "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
+        "watch-node": "nodemon dist/bot.js",
+        "watch-ts": "tsc -w"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/PaleoCrafter/harmony.git"
+    },
+    "keywords": [
+        "discord",
+        "bot"
+    ],
+    "author": "Marvin Rösch",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/PaleoCrafter/harmony/issues"
+    },
+    "homepage": "https://github.com/PaleoCrafter/harmony#readme",
+    "dependencies": {
+        "discord.js": "^13.1.0",
+        "keyv": "^4.0.3",
+        "keyv-file": "^0.2.0",
+        "winston": "^3.3.3"
+    },
+    "devDependencies": {
+        "@types/core-js": "^2.5.5",
+        "@types/keyv": "^3.1.3",
+        "@typescript-eslint/eslint-plugin": "^4.32.0",
+        "@typescript-eslint/parser": "^4.32.0",
+        "concurrently": "^6.2.2",
+        "eslint": "^7.32.0",
+        "nodemon": "^2.0.13",
+        "ts-node": "^10.2.1",
+        "typescript": "^4.4.3"
+    }
+}

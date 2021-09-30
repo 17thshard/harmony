@@ -1,4 +1,0 @@
-{
-  "name": "Harmony GraphQL schema",
-  "schemaPath": "./src/schema.gqls"
-}

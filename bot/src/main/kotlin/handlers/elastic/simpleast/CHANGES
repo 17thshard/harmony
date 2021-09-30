@@ -1,3 +1,0 @@
-The following modifications have been made to the SimpleAST source code:
- - All code referencing Android libraries has been removed or replaced
- - Unneeded classes, such as the regular Markdown rules were removed
