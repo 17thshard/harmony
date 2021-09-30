@@ -13,7 +13,6 @@ on:
 jobs:
   build-node:
     runs-on: ubuntu-latest
-    needs: build-conditions
 
     steps:
       - name: Checkout
