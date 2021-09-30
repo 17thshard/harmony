@@ -4,7 +4,7 @@
     "description": "A Discord bot for miscellaneous server management tasks.",
     "main": "dist/bot.js",
     "scripts": {
-        "build": "tsc",
+        "build": "npm run lint && tsc",
         "debug": "npm run build && npm run watch-debug",
         "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet",
         "lint:fix": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",

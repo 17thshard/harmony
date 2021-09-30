@@ -1,11 +1,11 @@
 import winston from 'winston';
 
-const { align, combine, timestamp, colorize, printf } = winston.format;
+const { padLevels, combine, timestamp, colorize, printf } = winston.format;
 
 export default winston.createLogger({
   transports: [new winston.transports.Console({ handleExceptions: true })],
   format: combine(
-    align(),
+    padLevels(),
     winston.format((info) => ({ ...info, level: info.level.toUpperCase() }))(),
     colorize(),
     timestamp(),
