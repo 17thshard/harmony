@@ -1,7 +1,0 @@
-query Channel($id: ID!) {
-  channel(id: $id) {
-    name
-    server
-    type
-  }
-}

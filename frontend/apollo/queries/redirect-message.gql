@@ -1,7 +1,0 @@
-query RedirectMessage($id: ID!) {
-  redirectMessage(id: $id) {
-    server
-    channel
-    createdAt
-  }
-}

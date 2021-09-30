@@ -1,7 +1,0 @@
-{
-  servers {
-    id
-    name
-    iconUrl
-  }
-}

@@ -1,6 +1,0 @@
-query LatestChannelMessage($channel: ID!, $before: Timestamp) {
-  latestMessage(channel: $channel, before: $before) {
-    id
-    createdAt
-  }
-}
