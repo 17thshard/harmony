@@ -1,5 +1,6 @@
 import { Awaited, Client, ClientEvents, Intents, TextChannel } from 'discord.js';
 import autoPublish from './auto-publish';
+import spoilerAttachments from './spoiler-attachments';
 import { Command } from './commands';
 import logger from './logging';
 
@@ -16,7 +17,7 @@ interface Module {
   additionalHandlers?: Partial<{ [K in keyof ClientEvents]: (client: Client, ...args: ClientEvents[K]) => Awaited<void> }>;
 }
 
-const modules: Module[] = [autoPublish];
+const modules: Module[] = [autoPublish, spoilerAttachments];
 const commands = modules.reduce<{ [name: string]: Command }>(
   (acc, module) => {
     if (module.command === undefined) {
