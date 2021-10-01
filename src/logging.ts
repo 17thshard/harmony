@@ -16,7 +16,7 @@ export default winston.createLogger({
       }
 
       if (info.error && info.error instanceof Error) {
-        line += `\nStack trace: ${info.meta.stack}`;
+        line += `\nStack trace: ${info.error.stack}`;
       }
 
       return line;
