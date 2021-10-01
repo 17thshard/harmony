@@ -57,6 +57,14 @@ export default {
       const channel = await client.channels.fetch(interaction.channelId) as TextChannel;
       const caption = interaction.options.getString('caption', false);
 
+      logger.info({
+        message: `${interaction.user.tag} initiated attachment process`,
+        context: {
+          channel: `#${channel.name}`,
+          guild: interaction.guildId
+        }
+      });
+
       const cancelButton = new MessageActionRow()
         .addComponents([
           new MessageButton()
@@ -108,6 +116,14 @@ export default {
           };
 
           await Promise.all([promptMessage.edit(edit), interaction.editReply(edit)]);
+
+          logger.info({
+            message: `${interaction.user.tag} canceled attachment process`,
+            context: {
+              channel: `#${channel.name}`,
+              guild: interaction.guildId
+            }
+          });
         } else if (result.type === 'message') {
           const acknowledgment = await result.message.reply({
             embeds: [buildEmbed(`Thanks, I'll be posting your attachments to ${channel} behind spoilers!`)]
@@ -146,11 +162,27 @@ export default {
                 ])
             ]
           });
+
+          logger.info({
+            message: `Served ${result.message.attachments.size} spoilered attachment(s) for ${interaction.user.tag}`,
+            context: {
+              channel: `#${channel.name}`,
+              guild: interaction.guildId
+            }
+          });
         }
       } catch (error) {
         let message = 'Failed to process your attachments.';
         if (error instanceof AggregateError && error.errors[0] instanceof Collection && error.errors[0].size === 0) {
-          message = 'No attachment has been received within a minute, aborting.';
+          message = 'No attachments have been received within a minute, aborting.';
+
+          logger.info({
+            message: `${interaction.user.tag} ran into attachment timeout`,
+            context: {
+              channel: `#${channel.name}`,
+              guild: interaction.guildId
+            }
+          });
         } else {
           logger.error({
             message: 'Failed to handle spoiler attachments request',
