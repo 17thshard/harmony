@@ -142,7 +142,7 @@ export default {
           });
 
           const spoilerMessage = await channel.send({
-            content: `Spoilers from ${interaction.user}${caption !== null ? `: ${caption}` : ''}`,
+            content: caption !== null ? `${caption} (sent by ${interaction.user})` : `Spoilers from ${interaction.user}`,
             allowedMentions: {
               parse: [],
               users: [interaction.user.id]
