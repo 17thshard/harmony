@@ -65,26 +65,38 @@ export default {
         }
       });
 
-      const cancelButton = new MessageActionRow()
-        .addComponents([
-          new MessageButton()
-            .setStyle('DANGER')
-            .setLabel('Cancel')
-            .setCustomId('cancel')
-        ]);
+      const cancelButton = new MessageButton()
+        .setStyle('DANGER')
+        .setLabel('Cancel')
+        .setCustomId('cancel');
 
       await interaction.reply({
         embeds: [buildEmbed('I\'ll be sending you a direct message to which you can reply with your desired attachments!')],
-        components: [
-          cancelButton
-        ],
         ephemeral: true
       });
 
       const promptMessage = await interaction.user.send({
         embeds: [buildEmbed('Please send me your attachments within the next minute...')],
         components: [
-          cancelButton
+          new MessageActionRow().addComponents([
+            new MessageButton()
+              .setStyle('LINK')
+              .setLabel('Go back to channel')
+              .setURL(`https://discord.com/channels/${interaction.guildId}/${interaction.channelId}/`),
+            cancelButton
+          ])
+        ]
+      });
+
+      await interaction.editReply({
+        components: [
+          new MessageActionRow().addComponents([
+            new MessageButton()
+              .setStyle('LINK')
+              .setLabel('Go to DM')
+              .setURL(promptMessage.url),
+            cancelButton
+          ])
         ]
       });
 
@@ -154,7 +166,7 @@ export default {
                   new MessageButton()
                     .setStyle('LINK')
                     .setLabel('Go to Message')
-                    .setURL(`https://discord.com/channels/${interaction.guildId}/${interaction.channelId}/${spoilerMessage.id}`),
+                    .setURL(spoilerMessage.url),
                   new MessageButton()
                     .setStyle('DANGER')
                     .setLabel('Delete Message')
