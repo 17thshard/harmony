@@ -1,5 +1,5 @@
 import { ComplexCommand } from './commands';
-import { Client, ColorResolvable, CommandInteraction, Message, MessageEmbed, TextChannel } from 'discord.js';
+import { Client, ColorResolvable, CommandInteraction, Message, MessageEmbed, Permissions, TextChannel } from 'discord.js';
 import storage from './storage';
 import logger from './logging';
 
@@ -31,6 +31,18 @@ export default {
             embeds: [
               buildEmbed(
                 `Cannot watch ${channel} for auto-publishing, as it is not an announcement channel!`,
+                'RED'
+              )
+            ]
+          });
+          return;
+        }
+
+        if (!channel.permissionsFor(interaction.user).has(Permissions.FLAGS.MANAGE_MESSAGES)) {
+          await interaction.reply({
+            embeds: [
+              buildEmbed(
+                `Cannot watch ${channel} for auto-publishing, you do not have permissions to manage messages there!`,
                 'RED'
               )
             ]
@@ -70,6 +82,18 @@ export default {
       },
       async stop (client: Client, interaction: CommandInteraction) {
         const channel = interaction.options.getChannel('channel', true);
+
+        if (channel.type === 'GUILD_NEWS' && !channel.permissionsFor(interaction.user).has(Permissions.FLAGS.MANAGE_MESSAGES)) {
+          await interaction.reply({
+            embeds: [
+              buildEmbed(
+                `You must be able to manage messages in ${channel} to manage its auto-publishing status!`,
+                'RED'
+              )
+            ]
+          });
+          return;
+        }
 
         const storageKey = buildStorageKey(interaction.guildId, channel.id);
         if (storage.get(storageKey) !== true) {
