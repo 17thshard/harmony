@@ -1,7 +1,8 @@
-import { Awaited, Client, ClientEvents, Intents, TextChannel } from 'discord.js';
+import { Awaitable, Client, ClientEvents, Intents, TextChannel } from 'discord.js';
 import autoPublish from './auto-publish';
 import spoilerAttachments from './spoiler-attachments';
 import autoThreadInvite from './auto-thread-invite';
+import rawMessage from './raw-message';
 import { Command } from './commands';
 import logger from './logging';
 
@@ -15,10 +16,10 @@ const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_
 
 interface Module {
   command?: Command;
-  additionalHandlers?: Partial<{ [K in keyof ClientEvents]: (client: Client, ...args: ClientEvents[K]) => Awaited<void> }>;
+  additionalHandlers?: Partial<{ [K in keyof ClientEvents]: (client: Client, ...args: ClientEvents[K]) => Awaitable<void> }>;
 }
 
-const modules: Module[] = [autoPublish, spoilerAttachments, autoThreadInvite];
+const modules: Module[] = [autoPublish, spoilerAttachments, autoThreadInvite, rawMessage];
 const commands = modules.reduce<{ [name: string]: Command }>(
   (acc, module) => {
     if (module.command === undefined) {
