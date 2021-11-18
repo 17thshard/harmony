@@ -1,13 +1,13 @@
-import { Awaited, Client, CommandInteraction, TextChannel } from 'discord.js';
+import { Awaitable, Client, CommandInteraction, TextChannel } from 'discord.js';
 import logger from './logging';
 
-type CommandHandler = (client: Client, interaction: CommandInteraction) => Awaited<void>
+type CommandHandler = (client: Client, interaction: CommandInteraction) => Awaitable<void>
 
 export abstract class Command {
   constructor (public readonly name: string) {
   }
 
-  public abstract handle (client: Client, interaction: CommandInteraction): Awaited<void>
+  public abstract handle (client: Client, interaction: CommandInteraction): Awaitable<void>
 }
 
 export class SimpleCommand extends Command {
