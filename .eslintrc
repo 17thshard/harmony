@@ -6,6 +6,7 @@
         "sourceType": "module"
     },
     "rules": {
+        "indent": ["error", 2],
         "brace-style": "error",
         "semi": [ "error", "always" ],
         "quotes": [ "error", "single" ],
