@@ -1,4 +1,4 @@
-import { Client, CommandInteraction, BaseGuildTextChannel } from 'discord.js';
+import { Client, CommandInteraction, BaseGuildTextChannel, Permissions } from 'discord.js';
 import { SimpleCommand } from './commands.js';
 
 export default {
@@ -15,8 +15,13 @@ export default {
 			
 			const { guildId, channelId, messageId } = match.groups;
 			const channel = await (await client.guilds.fetch(guildId)).channels.fetch(channelId);
-			if (!(channel instanceof BaseGuildTextChannel)) {
-				await interaction.editReply('Please link to a message in a text channel!');
+			if (!(
+				channel instanceof BaseGuildTextChannel
+				&& channel
+					.permissionsFor(interaction.member.user.id)
+					.has(Permissions.FLAGS.VIEW_CHANNEL)
+			)) {
+				await interaction.editReply('Please provide a valid message link!');
 				return;
 			}
 			
