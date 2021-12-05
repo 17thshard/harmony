@@ -13,7 +13,7 @@ import {
   TextChannel
 } from 'discord.js';
 import { SimpleCommand } from './commands';
-import logger from './logging';
+import logger from './logger';
 
 const TIMEOUT = 60000;
 const busy: { [userId: string]: boolean } = {};

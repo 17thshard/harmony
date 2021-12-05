@@ -11,7 +11,7 @@ import {
   ThreadChannel
 } from 'discord.js';
 import storage from './storage';
-import logger from './logging';
+import logger from './logger';
 
 function buildStorageKey (guild: string, channel: string, role: string) {
   return `autoThreadInvite.${guild}.${channel}.${role}`;

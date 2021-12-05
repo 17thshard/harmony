@@ -1,7 +1,7 @@
 import { ComplexCommand } from './commands';
 import { Client, ColorResolvable, CommandInteraction, Message, MessageEmbed, Permissions, TextChannel } from 'discord.js';
 import storage from './storage';
-import logger from './logging';
+import logger from './logger';
 
 function buildStorageKey (guild: string, channel: string) {
   return `autoPublish.${guild}.${channel}`;

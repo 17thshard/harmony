@@ -4,7 +4,7 @@ import spoilerAttachments from './spoiler-attachments';
 import autoThreadInvite from './auto-thread-invite';
 import rawMessage from './raw-message';
 import { Command } from './commands';
-import logger from './logging';
+import logger from './logger';
 
 const token = process.env.BOT_TOKEN;
 if (token === undefined) {
