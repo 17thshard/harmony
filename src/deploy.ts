@@ -7,7 +7,7 @@ if (token === undefined) {
   process.exit(1);
 }
 
-const cmds = [
+const cmds: ApplicationCommandDataResolvable[] = [
   {
     'type': 'CHAT_INPUT',
     'name': 'spoiler-attachments',
@@ -134,7 +134,7 @@ const cmds = [
     ],
     'defaultPermission': true
   }
-] as ApplicationCommandDataResolvable[];
+];
 
 
 const client = new Client({ intents: [] });
