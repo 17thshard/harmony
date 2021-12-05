@@ -1,5 +1,5 @@
 import { Client, CommandInteraction, BaseGuildTextChannel, Permissions } from 'discord.js';
-import { SimpleCommand } from './commands.js';
+import { SimpleCommand } from './commands';
 
 export default {
   command: new SimpleCommand(
