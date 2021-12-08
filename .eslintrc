@@ -6,7 +6,8 @@
         "sourceType": "module"
     },
     "rules": {
-        "indent": ["error", 2],
+        "quote-props": ["error", "as-needed"],
+        "indent": [ "error", 2, { "SwitchCase": 1 } ],
         "brace-style": "error",
         "semi": [ "error", "always" ],
         "quotes": [ "error", "single" ],
