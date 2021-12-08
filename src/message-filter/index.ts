@@ -55,19 +55,36 @@ async function filter (client: Client, message: Message | PartialMessage): Promi
     return;
   }
 
-  await message.delete();
-  await message.author.send({
-    embeds: [
-      new MessageEmbed()
-        .setTitle('Message Filter')
-        .setDescription(`Your message in ${message.channel} was deleted due to containing forbidden words.\nIf you wish to repost it without banned words, here is the original markup:\n\n${escape(
-          message.content)}`)
-        .setColor('RED')
-        .setFooter('Message filtered')
-        .setTimestamp(new Date())
-    ],
-    allowedMentions: { parse: [] }
-  });
+  try {
+    await message.delete();
+  } catch (error) {
+    logger.error({
+      message: `Could not delete message ${message.id} by ${message.author.tag} in #${message.channel.name} on ${message.guildId}`,
+      error
+    });
+  }
+
+  let notifiedUser = true;
+  try {
+    await message.author.send({
+      embeds: [
+        new MessageEmbed()
+          .setTitle('Message Filter')
+          .setDescription(`Your message in ${message.channel} was deleted due to containing forbidden words.\nIf you wish to repost it without banned words, here is the original markup:\n\n${escape(
+            message.content)}`)
+          .setColor('RED')
+          .setFooter('Message filtered')
+          .setTimestamp(new Date())
+      ],
+      allowedMentions: { parse: [] }
+    });
+  } catch (error) {
+    notifiedUser = false;
+    logger.error({
+      message: `Could not notify user ${message.author.tag} of message deletion`,
+      error
+    });
+  }
 
   logger.info(`Filtered out message by ${message.author.tag} in #${message.channel.name} on ${message.guildId}`);
 
@@ -94,6 +111,7 @@ async function filter (client: Client, message: Message | PartialMessage): Promi
         .setTitle('Message Filter')
         .setDescription(`Message by ${message.author} deleted from ${message.channel}${afterEditMessage}.\n\nApplied filters:\n${appliedFilters}`)
         .setTimestamp(message.editedAt !== null ? message.editedAt : message.createdAt)
+        .setFooter(notifiedUser ? '' : 'Could not send notification DM to user')
     ],
     allowedMentions: { parse: [] }
   });

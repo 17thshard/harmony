@@ -75,18 +75,33 @@ export default {
         ephemeral: true
       });
 
-      const promptMessage = await interaction.user.send({
-        embeds: [buildEmbed('Please send me your attachments within the next minute...')],
-        components: [
-          new MessageActionRow().addComponents([
-            new MessageButton()
-              .setStyle('LINK')
-              .setLabel('Go back to channel')
-              .setURL(`https://discord.com/channels/${interaction.guildId}/${interaction.channelId}/`),
-            cancelButton
-          ])
-        ]
-      });
+      let promptMessage: Message;
+      try {
+        promptMessage = await interaction.user.send({
+          embeds: [buildEmbed('Please send me your attachments within the next minute...')],
+          components: [
+            new MessageActionRow().addComponents([
+              new MessageButton()
+                .setStyle('LINK')
+                .setLabel('Go back to channel')
+                .setURL(`https://discord.com/channels/${interaction.guildId}/${interaction.channelId}/`),
+              cancelButton
+            ])
+          ]
+        });
+      } catch (error) {
+        logger.error({
+          message: `Could not DM user ${interaction.user.tag} for spoiler attachments`,
+          error
+        });
+
+        await interaction.editReply({
+          embeds: [buildEmbed('Unfortunately I can\'t send you a DM, check your privacy settings for this server!', 'RED')]
+        });
+
+        delete busy[interaction.user.id];
+        return;
+      }
 
       await interaction.editReply({
         components: [
