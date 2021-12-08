@@ -1,4 +1,4 @@
-import { ApplicationCommandDataResolvable, Client } from 'discord.js';
+import { ApplicationCommandDataResolvable, ApplicationCommandOptionChoice, ApplicationCommandSubCommandData, Client } from 'discord.js';
 import logger from './logger';
 
 const token = process.env.BOT_TOKEN;
@@ -6,6 +6,68 @@ if (token === undefined) {
   logger.error('Bot token must be provided via BOT_TOKEN environment variable');
   process.exit(1);
 }
+
+const filterTypes: ApplicationCommandOptionChoice[] = [
+  {
+    name: 'Matches any message that contains the filter content verbatim',
+    value: 'contains'
+  },
+  {
+    name: 'Matches any message that contains the filter content as word (separated by spaces)',
+    value: 'word'
+  },
+  {
+    name: 'Matches any message that the filter content matches when interpreted as regular expression',
+    value: 'regex'
+  }
+];
+const filterSubCommands: ApplicationCommandSubCommandData[] = [
+  {
+    type: 'SUB_COMMAND',
+    name: 'add',
+    description: 'Add a new filter',
+    options: [
+      {
+        type: 'STRING',
+        name: 'type',
+        description: 'The type of filter to apply',
+        choices: filterTypes,
+        required: true
+      },
+      {
+        type: 'STRING',
+        name: 'filter',
+        description: 'The content of the filter that gets matched upon based on the filter type',
+        required: true
+      }
+    ]
+  },
+  {
+    type: 'SUB_COMMAND',
+    name: 'delete',
+    description: 'Delete an existing filter',
+    options: [
+      {
+        type: 'STRING',
+        name: 'type',
+        description: 'The type of filter to apply',
+        choices: filterTypes,
+        required: true
+      },
+      {
+        type: 'STRING',
+        name: 'filter',
+        description: 'The content of the filter that gets matched upon based on the filter type',
+        required: true
+      }
+    ]
+  },
+  {
+    type: 'SUB_COMMAND',
+    name: 'list',
+    description: 'List all filters'
+  }
+];
 
 const cmds: ApplicationCommandDataResolvable[] = [
   {
@@ -133,6 +195,95 @@ const cmds: ApplicationCommandDataResolvable[] = [
       }
     ],
     defaultPermission: true
+  },
+  {
+    type: 'CHAT_INPUT',
+    name: 'message-filter',
+    defaultPermission: false,
+    description: 'Manage message filters for this server',
+    options: [
+      {
+        type: 'SUB_COMMAND_GROUP',
+        name: 'forbidden',
+        description: 'Manage forbidden words and phrases',
+        options: filterSubCommands
+      },
+      {
+        type: 'SUB_COMMAND_GROUP',
+        name: 'allowed',
+        description: 'Manage words and phrases that are explicitly allowed (and take priority over forbbiden words)',
+        options: filterSubCommands
+      },
+      {
+        type: 'SUB_COMMAND_GROUP',
+        name: 'exemptions',
+        description: 'Manage exemptions to the message filter',
+        options: [
+          {
+            type: 'SUB_COMMAND',
+            name: 'add',
+            description: 'Add an exemption. Must provide exactly one of the available options',
+            options: [
+              {
+                type: 'USER',
+                name: 'user',
+                description: 'The user to exempt'
+              },
+              {
+                type: 'ROLE',
+                name: 'role',
+                description: 'The role to exempt'
+              },
+              {
+                type: 'CHANNEL',
+                name: 'channel',
+                description: 'The channel to exempt'
+              }
+            ]
+          },
+          {
+            type: 'SUB_COMMAND',
+            name: 'delete',
+            description: 'Delete an exemption. Must provide exactly one of the available options',
+            options: [
+              {
+                type: 'USER',
+                name: 'user',
+                description: 'The user to exempt'
+              },
+              {
+                type: 'ROLE',
+                name: 'role',
+                description: 'The role to exempt'
+              },
+              {
+                type: 'CHANNEL',
+                name: 'channel',
+                description: 'The channel to exempt'
+              }
+            ]
+          },
+          {
+            type: 'SUB_COMMAND',
+            name: 'list',
+            description: 'List all exemptions'
+          }
+        ]
+      },
+      {
+        type: 'SUB_COMMAND',
+        name: 'set-logging-channel',
+        description: 'Specify the channel where deletions should be logged',
+        options: [
+          {
+            type: 'CHANNEL',
+            name: 'channel',
+            description: 'The log channel to use',
+            required: true
+          }
+        ]
+      }
+    ]
   }
 ];
 

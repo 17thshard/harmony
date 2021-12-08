@@ -1,8 +1,9 @@
-import { Awaitable, Client, ClientEvents, Intents, TextChannel } from 'discord.js';
+import { Awaitable, Client, ClientEvents, FetchedThreads, Guild, Intents, TextChannel, ThreadChannel } from 'discord.js';
 import autoPublish from './auto-publish';
 import spoilerAttachments from './spoiler-attachments';
 import autoThreadInvite from './auto-thread-invite';
 import rawMessage from './raw-message';
+import messageFilter from './message-filter';
 import { Command } from './commands';
 import logger from './logger';
 
@@ -12,14 +13,21 @@ if (token === undefined) {
   process.exit(1);
 }
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.DIRECT_MESSAGES] });
+const client = new Client({
+  intents: [
+    Intents.FLAGS.GUILDS,
+    Intents.FLAGS.GUILD_MEMBERS,
+    Intents.FLAGS.GUILD_MESSAGES,
+    Intents.FLAGS.DIRECT_MESSAGES
+  ]
+});
 
 interface Module {
   command?: Command;
   additionalHandlers?: Partial<{ [K in keyof ClientEvents]: (client: Client, ...args: ClientEvents[K]) => Awaitable<void> }>;
 }
 
-const modules: Module[] = [autoPublish, spoilerAttachments, autoThreadInvite, rawMessage];
+const modules: Module[] = [autoPublish, spoilerAttachments, autoThreadInvite, rawMessage, messageFilter];
 const commands = modules.reduce<{ [name: string]: Command }>(
   (acc, module) => {
     if (module.command === undefined) {
@@ -33,9 +41,31 @@ const commands = modules.reduce<{ [name: string]: Command }>(
   {}
 );
 
-client.once('ready', () => {
+client.once('ready', async () => {
   logger.info('Ready!');
+  await Promise.all(client.guilds.valueOf().map(joinActiveThreads));
 });
+
+async function tryJoinThread (thread: ThreadChannel) {
+  if (thread.joinable && !thread.joined) {
+    await thread.join();
+  }
+}
+
+async function joinActiveThreads (guild: Guild) {
+  let activeThreads: FetchedThreads;
+  do {
+    activeThreads = await guild.channels.fetchActiveThreads();
+    await Promise.all(activeThreads.threads.map(tryJoinThread));
+  } while (activeThreads.hasMore);
+}
+
+client.on('threadCreate', tryJoinThread);
+client.on('threadUpdate', (_, newThread) => tryJoinThread(newThread));
+client.on('threadListSync', async threads => {
+  await Promise.all(threads.map(tryJoinThread));
+});
+client.on('guildCreate', joinActiveThreads);
 
 client.on('interactionCreate', async interaction => {
   if (!interaction.isCommand()) {
@@ -53,6 +83,7 @@ client.on('interactionCreate', async interaction => {
         guild: interaction.guildId
       }
     });
+    console.log(interaction);
 
     await interaction.reply({ content: 'Sorry, I cannot handle this command!', ephemeral: true });
     return;

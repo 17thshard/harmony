@@ -1,11 +1,7 @@
 import { ComplexCommand } from './commands';
 import { Client, ColorResolvable, CommandInteraction, Message, MessageEmbed, Permissions, TextChannel } from 'discord.js';
-import storage from './storage';
+import { guilds as storage } from './storage';
 import logger from './logger';
-
-function buildStorageKey (guild: string, channel: string) {
-  return `autoPublish.${guild}.${channel}`;
-}
 
 function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
   const embed = new MessageEmbed()
@@ -50,14 +46,13 @@ export default {
           return;
         }
 
-        const storageKey = buildStorageKey(interaction.guildId, channel.id);
-        if (storage.get(storageKey) === true) {
+        if (storage.channels(interaction.guildId).get(channel.id, 'autoPublish') === true) {
           await interaction.reply({ embeds: [buildEmbed(`${channel} is already being watched for new messages!`)] });
           return;
         }
 
         try {
-          storage.set(storageKey, true);
+          storage.channels(interaction.guildId).set(channel.id, 'autoPublish', true);
         } catch (error) {
           const sourceChannel = await client.channels.fetch(interaction.channelId) as TextChannel;
           logger.error({
@@ -95,14 +90,13 @@ export default {
           return;
         }
 
-        const storageKey = buildStorageKey(interaction.guildId, channel.id);
-        if (storage.get(storageKey) !== true) {
+        if (storage.channels(interaction.guildId).get(channel.id, 'autoPublish') !== true) {
           await interaction.reply({ embeds: [buildEmbed(`${channel} is not being watched for new messages!`, 'RED')] });
           return;
         }
 
         try {
-          storage.delete(buildStorageKey(interaction.guildId, channel.id));
+          storage.channels(interaction.guildId).delete(channel.id, 'autoPublish');
         } catch (error) {
           const sourceChannel = await client.channels.fetch(interaction.channelId) as TextChannel;
           logger.error({
@@ -127,11 +121,11 @@ export default {
       },
       async list (client: Client, interaction: CommandInteraction) {
         try {
-          const prefix = `autoPublish.${interaction.guildId}.`;
-          const keys = storage.keys().filter(key => key.startsWith(prefix) && storage.get(key) === true);
-          const list = await Promise.all(keys.map(async key => {
-            const channel = await client.channels.fetch(key.substring(prefix.length));
-            const stats = storage.get(`${key}.stats`);
+          const channelStorage = storage.channels(interaction.guildId);
+          const values = channelStorage.list('autoPublish');
+          const list = await Promise.all(Object.keys(values).filter(key => values[key]).map(async key => {
+            const channel = await client.channels.fetch(key);
+            const stats = channelStorage.get(key, 'autoPublish.stats', v => v, 0);
             const pluralS = stats !== 1 ? 's' : '';
 
             return ` • ${channel}: ${stats === undefined || stats === 0 ? 'No' : stats} message${pluralS} auto-published so far`;
@@ -173,8 +167,8 @@ export default {
         return;
       }
 
-      const storageKey = buildStorageKey(message.guildId, message.channelId);
-      if (storage.get(storageKey) !== true) {
+      const channelStorage = storage.channels(message.guildId);
+      if (channelStorage.get(message.channelId, 'autoPublish') !== true) {
         return;
       }
 
@@ -208,9 +202,8 @@ export default {
         return;
       }
 
-      const statsKey = `${storageKey}.stats`;
-      const currentStats = storage.get(statsKey, 0);
-      storage.set(statsKey, currentStats + 1);
+      const currentStats = channelStorage.get(message.channelId, 'autoPublish.stats', v => v, 0);
+      channelStorage.set(message.channelId, 'autoPublish.stats', currentStats + 1);
     }
   }
 };

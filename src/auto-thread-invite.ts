@@ -7,15 +7,12 @@ import {
   MessageEmbed,
   Permissions,
   Role,
+  Snowflake,
   TextChannel,
   ThreadChannel
 } from 'discord.js';
-import storage from './storage';
+import { guilds as storage } from './storage';
 import logger from './logger';
-
-function buildStorageKey (guild: string, channel: string, role: string) {
-  return `autoThreadInvite.${guild}.${channel}.${role}`;
-}
 
 function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
   const embed = new MessageEmbed()
@@ -61,8 +58,9 @@ export default {
           return;
         }
 
-        const storageKey = buildStorageKey(interaction.guildId, channel.id, role.id);
-        if (storage.get(storageKey) === true) {
+        const channelStorage = storage.channels(interaction.guildId);
+        const storedRoles = channelStorage.get(channel.id, 'autoThreadInvite', v => v, {});
+        if (storedRoles[role.id] === true) {
           await interaction.reply({
             embeds: [buildEmbed(`${role} members are already automatically added to new threads in ${channel}!`)],
             allowedMentions: {
@@ -73,7 +71,8 @@ export default {
         }
 
         try {
-          storage.set(storageKey, true);
+          storedRoles[role.id] = true;
+          channelStorage.set(channel.id, 'autoThreadInvite', storedRoles);
         } catch (error) {
           const sourceChannel = await client.channels.fetch(interaction.channelId) as TextChannel;
           logger.error({
@@ -123,8 +122,9 @@ export default {
           return;
         }
 
-        const storageKey = buildStorageKey(interaction.guildId, channel.id, role.id);
-        if (storage.get(storageKey) !== true) {
+        const channelStorage = storage.channels(interaction.guildId);
+        const storedRoles = channelStorage.get(channel.id, 'autoThreadInvite', v => v, {});
+        if (storedRoles[role.id] !== true) {
           await interaction.reply({
             embeds: [
               buildEmbed(
@@ -138,7 +138,13 @@ export default {
         }
 
         try {
-          storage.delete(buildStorageKey(interaction.guildId, channel.id, role.id));
+          delete storedRoles[role.id];
+
+          if (Object.keys(role.id).length === 0) {
+            channelStorage.delete(channel.id, 'autoThreadInvite');
+          } else {
+            channelStorage.set(channel.id, 'autoThreadinvite', storedRoles);
+          }
         } catch (error) {
           const sourceChannel = await client.channels.fetch(interaction.channelId) as TextChannel;
           logger.error({
@@ -168,20 +174,20 @@ export default {
       async list (client: Client, interaction: CommandInteraction) {
         try {
           const filterChannel = interaction.options.getChannel('channel', false);
-          const prefix = `autoThreadInvite.${interaction.guildId}.`;
-          const keys = storage.keys().filter(key => key.startsWith(prefix) && storage.get(key) === true);
-          const grouped = (await Promise.all(keys.map(async key => {
-            const lastDotIndex = key.lastIndexOf('.');
-            const channel = await client.channels.fetch(key.substring(prefix.length, lastDotIndex));
-            const role = await interaction.guild.roles.fetch(key.substring(lastDotIndex + 1));
+          const channelsWithRoles = storage.channels(interaction.guildId).list<Record<Snowflake, boolean>>('autoThreadInvite');
+          const resolvedRoles = await Promise.all(Object.keys(channelsWithRoles).map(async (key) => {
+            const channel = await client.channels.fetch(key);
+            const roles = channelsWithRoles[key];
+            const resolved = await Promise.all(
+              Object.keys(roles).filter(id => roles[id] === true).map(id => interaction.guild.roles.fetch(id))
+            );
 
-            return { channel, role };
-          }))).reduce(
+            return { channel, roles: resolved };
+          }));
+
+          const grouped = resolvedRoles.reduce(
             (acc, item) => {
-              if (acc[item.channel.id.toString()] === undefined) {
-                acc[item.channel.id.toString()] = [];
-              }
-              acc[item.channel.id.toString()].push(item);
+              acc[item.channel.id.toString()] = item.roles.map(role => ({ channel: item.channel, role }));
               return acc;
             },
             {} as Record<string, Array<{ channel: Channel, role: Role }>>
@@ -231,9 +237,10 @@ export default {
   ),
   additionalHandlers: {
     async threadCreate (client: Client, thread: ThreadChannel): Promise<void> {
-      const prefix = `autoThreadInvite.${thread.guildId}.${thread.parent.id}.`;
-      const keys = storage.keys().filter(key => key.startsWith(prefix) && storage.get(key) === true);
-      const roles = await Promise.all(keys.map(key => thread.guild.roles.fetch(key.substring(prefix.length))));
+      const storedRoles = storage.channels(thread.guildId).get(thread.parentId, 'autoThreadInvite', v => v, {});
+      const roles = await Promise.all(
+        Object.keys(storedRoles).filter(key => storedRoles[key] === true).map(key => thread.guild.roles.fetch(key))
+      );
 
       if (roles.length === 0) {
         return;
