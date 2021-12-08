@@ -2,6 +2,7 @@ import { KeyvFile } from 'keyv-file';
 import { Snowflake } from 'discord.js';
 
 const backingFile = new KeyvFile({ filename: 'data-store.json' });
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 class GuildStorage {
   private cache: { [key: string]: { expiry: number, value: any } } = {};
@@ -16,8 +17,8 @@ class GuildStorage {
 
   set<V> (guild: Snowflake, key: string, value: V) {
     const storageKey = this.buildStorageKey(guild, key);
-    backingFile.set(storageKey, value);
-    this.cache[storageKey] = { expiry: Date.now() + 3600, value: value };
+    backingFile.set(storageKey, JSON.parse(JSON.stringify(value)));
+    this.cache[storageKey] = { expiry: Date.now() + CACHE_TTL, value: value };
   }
 
   get<V> (guild: Snowflake, key: string, deserialize: (raw: any) => V = v => v, defaultValue: V | null = null): V | null {
@@ -31,7 +32,9 @@ class GuildStorage {
       return defaultValue;
     }
 
-    return deserialize(raw);
+    const deserialized = deserialize(raw);
+    this.cache[storageKey] = { expiry: Date.now() + CACHE_TTL, value: deserialized };
+    return deserialized;
   }
 
   delete (guild: Snowflake, key: string) {
@@ -74,7 +77,7 @@ class ChannelStorage {
     }
 
     this.channels[channel][key] = value;
-    this.cache[`${channel}.${key}`] = { expiry: Date.now() + 3600, value: value };
+    this.cache[`${channel}.${key}`] = { expiry: Date.now() + CACHE_TTL, value: value };
 
     this.guildStorage.set(this.guild, 'channels', this.channels);
   }

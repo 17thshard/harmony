@@ -10,7 +10,7 @@
         "lint:fix": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
         "run-debug": "nodemon --inspect dist/bot.js",
         "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
-        "watch-node": "nodemon dist/bot.js",
+        "watch-node": "nodemon --ignore data-store.json dist/bot.js",
         "watch-ts": "tsc -w",
         "deploy": "npm run build && node dist/deploy.js",
         "deploy-debug": "npm run build && nodemon --inspect dist/deploy.js",
