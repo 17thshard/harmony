@@ -27,20 +27,17 @@ function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
 }
 
 async function filter (client: Client, message: Message | PartialMessage): Promise<void> {
-  console.log('Received a message!');
   // Always ignore self and non-guild messages
   if (message.author.id === client.user.id || message.channel.type === 'DM') {
     return;
   }
 
   const filterCollection = collections.get(message.guildId);
-  logger.info(filterCollection);
   if (filterCollection === null || filterCollection.forbidden.length === 0) {
     return;
   }
 
   const guildExemptions = exemptions.get(message.guildId, []);
-  logger.info(guildExemptions);
   if (guildExemptions.some(e => e.test(message))) {
     return;
   }
@@ -54,7 +51,6 @@ async function filter (client: Client, message: Message | PartialMessage): Promi
     .flatMap(filter => filter.match(sanitizedContent).map(result => ({ result, filter })))
     .filter(({ result }) => allowed.search(result.interval.low, result.interval.high).length == 0);
 
-  logger.info(forbidden);
   if (forbidden.length === 0) {
     return;
   }
