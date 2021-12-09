@@ -32,7 +32,7 @@ export class RoleExemption implements MessageFilterExemption {
   }
 
   test (message: Message | PartialMessage): boolean {
-    return message.member.roles.resolveId(this.target) !== null;
+    return message.member.roles.valueOf().has(this.target);
   }
 
   describe (): string {
