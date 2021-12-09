@@ -27,7 +27,7 @@ function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
 }
 
 async function filter (client: Client, message: Message | PartialMessage): Promise<void> {
-  console.log("Received a message!");
+  console.log('Received a message!');
   // Always ignore self and non-guild messages
   if (message.author.id === client.user.id || message.channel.type === 'DM') {
     return;
