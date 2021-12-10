@@ -43,6 +43,10 @@ const commands = modules.reduce<{ [name: string]: Command }>(
 
 client.once('ready', async () => {
   logger.info('Ready!');
+  client.user.setActivity({
+    type: 'WATCHING',
+    name: 'YOU 👁👁'
+  });
   await Promise.all(client.guilds.valueOf().map(joinActiveThreads));
 });
 
