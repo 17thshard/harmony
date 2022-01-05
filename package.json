@@ -27,9 +27,9 @@
     "author": "Marvin Rösch",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/PaleoCrafter/harmony/issues"
+        "url": "https://github.com/Palanaeum/harmony/issues"
     },
-    "homepage": "https://github.com/PaleoCrafter/harmony#readme",
+    "homepage": "https://github.com/Palanaeum/harmony#readme",
     "dependencies": {
         "discord.js": "^13.3.1",
         "keyv": "^4.0.3",
