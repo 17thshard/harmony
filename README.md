@@ -1,7 +1,7 @@
 # harmony
 
-<a href="https://github.com/Palanaeum/harmony/actions?query=workflow%3ACI" title="Build workflow">
-<img src="https://github.com/Palanaeum/harmony/workflows/CI/badge.svg" alt="Build Status" />
+<a href="https://github.com/17thshard/harmony/actions?query=workflow%3ACI" title="Build workflow">
+<img src="https://github.com/17thshard/harmony/workflows/CI/badge.svg" alt="Build Status" />
 </a>
 <a href="https://discord.gg/nF3gxQCkwk?utm_source=Github&utm_medium=Badge" title="Join Discord">
 <img src="https://img.shields.io/discord/304777819936784385?color=%237289da&label=Join&logo=discord&logoColor=white&labelColor=%23697ec4" alt="Discord" />

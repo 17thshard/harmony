@@ -18,7 +18,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/PaleoCrafter/harmony.git"
+        "url": "git+https://github.com/17thshard/harmony.git"
     },
     "keywords": [
         "discord",
@@ -27,9 +27,9 @@
     "author": "Marvin Rösch",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/Palanaeum/harmony/issues"
+        "url": "https://github.com/17thshard/harmony/issues"
     },
-    "homepage": "https://github.com/Palanaeum/harmony#readme",
+    "homepage": "https://github.com/17thshard/harmony#readme",
     "dependencies": {
         "discord.js": "^13.3.1",
         "keyv": "^4.0.3",
