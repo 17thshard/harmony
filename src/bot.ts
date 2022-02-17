@@ -4,6 +4,7 @@ import spoilerAttachments from './spoiler-attachments';
 import autoThreadInvite from './auto-thread-invite';
 import rawMessage from './raw-message';
 import messageFilter from './message-filter';
+import { simple as mod, full as modhook } from './modhook';
 import { Command } from './commands';
 import logger from './logger';
 
@@ -27,7 +28,7 @@ interface Module {
   additionalHandlers?: Partial<{ [K in keyof ClientEvents]: (client: Client, ...args: ClientEvents[K]) => Awaitable<void> }>;
 }
 
-const modules: Module[] = [autoPublish, spoilerAttachments, autoThreadInvite, rawMessage, messageFilter];
+const modules: Module[] = [autoPublish, spoilerAttachments, autoThreadInvite, rawMessage, messageFilter, mod, modhook];
 const commands = modules.reduce<{ [name: string]: Command }>(
   (acc, module) => {
     if (module.command === undefined) {
