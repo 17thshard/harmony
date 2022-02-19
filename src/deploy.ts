@@ -7,6 +7,14 @@ if (token === undefined) {
   process.exit(1);
 }
 
+const guildTextChannelTypes = [
+  'GUILD_TEXT' as const,
+  'GUILD_NEWS' as const,
+  'GUILD_NEWS_THREAD' as const,
+  'GUILD_PRIVATE_THREAD' as const,
+  'GUILD_PUBLIC_THREAD' as const,
+];
+
 const filterTypes: ApplicationCommandOptionChoice[] = [
   {
     name: 'Matches any message that contains the filter content verbatim',
@@ -284,12 +292,104 @@ const cmds: ApplicationCommandDataResolvable[] = [
         ]
       }
     ]
-  }
+  },
+  {
+    type: 'CHAT_INPUT',
+    name: 'mod',
+    description: 'Send a message in a more official-looking way',
+    options: [
+      {
+        type: 'STRING',
+        name: 'content',
+        description: 'Content of the message to send',
+        required: true
+      },
+      {
+        type: 'STRING',
+        name: 'edit-link',
+        description: 'If provided, will edit the message at the given link rather than sending a new one',
+        required: false
+      },
+      {
+        type: 'CHANNEL',
+        name: 'channel',
+        description: 'If provided, will send in the specified channel instead of this one',
+        required: false,
+        channelTypes: guildTextChannelTypes
+      },
+      //{
+      //  type: 'ATTACHMENT',
+      //  name: 'attachment',
+      //  description: 'Optional attachment to include',
+      //  required: false
+      //},
+    ],
+    defaultPermission: false
+  },
+  {
+    type: 'CHAT_INPUT',
+    name: 'webhook',
+    description: 'Send and edit webhook messages',
+    options: [
+      {
+        type: 'STRING',
+        name: 'content',
+        description: 'Content of the message to send. Prefix with `RAW:` to interpret the rest of the string as raw JSON.',
+        required: true
+      },
+      {
+        type: 'STRING',
+        name: 'edit-link',
+        description: '(Incompat. with appearance + destination opts) Link to message to edit rather than sending a new one',
+        required: false
+      },
+      {
+        type: 'CHANNEL',
+        name: 'channel',
+        description: 'If provided, will send in the specified channel instead of this one',
+        required: false,
+        channelTypes: guildTextChannelTypes
+      },
+      //{
+      //  type: 'ATTACHMENT',
+      //  name: 'attachment',
+      //  description: 'Optional attachment to include',
+      //  required: false
+      //},
+      {
+        type: 'STRING',
+        name: 'webhook-id',
+        description: 'Alternate webhook to use instead of the default one.',
+        required: false
+      },
+      {
+        type: 'STRING',
+        name: 'username',
+        description: 'Alternate username to post with instead of the webhook\'s default',
+        required: false
+      },
+      {
+        type: 'STRING',
+        name: 'avatar-link',
+        description: 'Alternate avatar to post with instead of the webhook\'s default. Lower priority than `avatar`.',
+        required: false
+      },
+      //{
+      //  type: 'ATTACHMENT',
+      //  name: 'avatar',
+      //  description: 'Alternate avatar to post with instead of the webhook\'s default. Higher priority than `avatar-link`.',
+      //  required: false
+      //},
+    ],
+    defaultPermission: false
+  },
 ];
 
 const client = new Client({ intents: [] });
 client.once('ready', async () => {
-  await client.application.commands.set(cmds);
+  const guildId = process.env.HARMONY_DEPLOY_GUILD;
+  if (guildId) await (await client.guilds.fetch(guildId)).commands.set(cmds);
+  else await client.application.commands.set(cmds);
   console.log('All commands deployed');
   client.destroy();
 });
