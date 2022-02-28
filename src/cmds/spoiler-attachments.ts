@@ -12,8 +12,8 @@ import {
   MessageEmbed,
   TextChannel
 } from 'discord.js';
-import { SimpleCommand } from './commands';
-import logger from './logger';
+import { SimpleCommand } from '../commands';
+import logger from '../utils/logger';
 
 const TIMEOUT = 60000;
 const busy: { [userId: string]: boolean } = {};

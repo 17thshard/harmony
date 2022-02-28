@@ -1,6 +1,6 @@
 import { Client, CommandInteraction, BaseGuildTextChannel, Permissions } from 'discord.js';
-import { SimpleCommand } from './commands';
-import { escape } from './message-utils';
+import { SimpleCommand } from '../commands';
+import { escape } from '../utils/message-utils';
 
 export default {
   command: new SimpleCommand(

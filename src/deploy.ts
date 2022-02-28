@@ -1,5 +1,5 @@
 import { ApplicationCommandDataResolvable, ApplicationCommandOptionChoice, ApplicationCommandSubCommandData, Client } from 'discord.js';
-import logger from './logger';
+import logger from './utils/logger';
 
 const token = process.env.BOT_TOKEN;
 if (token === undefined) {

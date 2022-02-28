@@ -1,4 +1,4 @@
-import { ComplexCommand } from './commands';
+import { ComplexCommand } from '../commands';
 import {
   Channel,
   Client,
@@ -11,8 +11,8 @@ import {
   TextChannel,
   ThreadChannel
 } from 'discord.js';
-import { guilds as storage } from './storage';
-import logger from './logger';
+import { guilds as storage } from '../utils/storage';
+import logger from '../utils/logger';
 
 function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
   const embed = new MessageEmbed()
