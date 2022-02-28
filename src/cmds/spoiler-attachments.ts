@@ -1,17 +1,21 @@
 import {
   ButtonInteraction,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChatInputCommandInteraction,
   Client,
   Collection,
   ColorResolvable,
-  CommandInteraction,
+  ComponentType,
+  EmbedBuilder,
   Interaction,
   Message,
-  MessageActionRow,
-  MessageButton,
+  MessageActionRowComponentBuilder,
   MessageComponentInteraction,
   MessageEditOptions,
-  MessageEmbed, MessageOptions, MessagePayload,
-  TextChannel
+  MessageOptions,
+  TextChannel,
 } from 'discord.js';
 import { SimpleCommand } from '../commands';
 import logger from '../utils/logger';
@@ -19,8 +23,8 @@ import logger from '../utils/logger';
 const TIMEOUT = 60000;
 const busy: { [userId: string]: boolean } = {};
 
-function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
-  const embed = new MessageEmbed()
+function buildEmbed(message: string, color?: ColorResolvable): EmbedBuilder {
+  const embed = new EmbedBuilder()
     .setTitle('Spoiler Attachments')
     .setDescription(message);
 
@@ -44,10 +48,10 @@ interface CancelResult {
 export default {
   command: new SimpleCommand(
     'spoiler-attachments',
-    async (client: Client, interaction: CommandInteraction) => {
+    async (client: Client, interaction: ChatInputCommandInteraction<'cached'>) => {
       if (busy[interaction.user.id] === true) {
         await interaction.reply({
-          embeds: [buildEmbed('I\'m already waiting for an attachment from you!', 'RED')],
+          embeds: [buildEmbed('I\'m already waiting for an attachment from you!', 'Red')],
           ephemeral: true
         });
         return;
@@ -66,8 +70,8 @@ export default {
         }
       });
 
-      const cancelButton = new MessageButton()
-        .setStyle('DANGER')
+      const cancelButton = new ButtonBuilder()
+        .setStyle(ButtonStyle.Danger)
         .setLabel('Cancel')
         .setCustomId('cancel');
 
@@ -81,13 +85,14 @@ export default {
         promptMessage = await interaction.user.send({
           embeds: [buildEmbed('Please send me your attachments within the next minute...')],
           components: [
-            new MessageActionRow().addComponents([
-              new MessageButton()
-                .setStyle('LINK')
-                .setLabel('Go back to channel')
-                .setURL(`https://discord.com/channels/${interaction.guildId}/${interaction.channelId}/`),
-              cancelButton
-            ])
+            new ActionRowBuilder<MessageActionRowComponentBuilder>()
+              .addComponents([
+                new ButtonBuilder()
+                  .setStyle(ButtonStyle.Link)
+                  .setLabel('Go back to channel')
+                  .setURL(`https://discord.com/channels/${interaction.guildId}/${interaction.channelId}/`),
+                cancelButton
+              ])
           ]
         });
       } catch (error) {
@@ -97,7 +102,7 @@ export default {
         });
 
         await interaction.editReply({
-          embeds: [buildEmbed('Unfortunately I can\'t send you a DM, check your privacy settings for this server!', 'RED')]
+          embeds: [buildEmbed('Unfortunately I can\'t send you a DM, check your privacy settings for this server!', 'Red')]
         });
 
         delete busy[interaction.user.id];
@@ -106,13 +111,13 @@ export default {
 
       await interaction.editReply({
         components: [
-          new MessageActionRow().addComponents([
-            new MessageButton()
-              .setStyle('LINK')
+          new ActionRowBuilder<MessageActionRowComponentBuilder>().setComponents([
+            new ButtonBuilder()
+              .setStyle(ButtonStyle.Link)
               .setLabel('Go to DM')
-              .setURL(promptMessage.url),
+              .setURL(promptMessage.url) as MessageActionRowComponentBuilder,
             cancelButton
-          ])
+          ]),
         ]
       });
 
@@ -128,7 +133,7 @@ export default {
 
           return i.user.id === interaction.user.id && i.customId === 'cancel';
         },
-        componentType: 'BUTTON',
+        componentType: ComponentType.Button,
         time: TIMEOUT
       }).then(i => ({ type: 'cancel', interaction: i }) as CancelResult)));
 
@@ -177,14 +182,14 @@ export default {
           await acknowledgment.edit({
             embeds: [buildEmbed(`Attachments have been sent behind spoilers to ${channel}.\nUse the buttons below to manage my message.`)],
             components: [
-              new MessageActionRow()
+              new ActionRowBuilder<ButtonBuilder>()
                 .addComponents([
-                  new MessageButton()
-                    .setStyle('LINK')
+                  new ButtonBuilder()
+                    .setStyle(ButtonStyle.Link)
                     .setLabel('Go to Message')
                     .setURL(spoilerMessage.url),
-                  new MessageButton()
-                    .setStyle('DANGER')
+                  new ButtonBuilder()
+                    .setStyle(ButtonStyle.Danger)
                     .setLabel('Delete Message')
                     .setCustomId(`delete-spoilers.${interaction.channelId}.${spoilerMessage.id}`)
                 ])
@@ -224,7 +229,7 @@ export default {
         }
 
         const content: MessageOptions & MessageEditOptions = {
-          embeds: [buildEmbed(message, 'RED')],
+          embeds: [buildEmbed(message, 'Red')],
           components: []
         };
 
@@ -235,7 +240,7 @@ export default {
     }
   ),
   additionalHandlers: {
-    async interactionCreate (client: Client, interaction: Interaction): Promise<void> {
+    async interactionCreate(client: Client, interaction: Interaction): Promise<void> {
       if (!interaction.isButton() || !interaction.customId.startsWith('delete-spoilers')) {
         return;
       }
@@ -260,7 +265,7 @@ export default {
           });
 
           await interaction.update({
-            embeds: [buildEmbed('An error occurred while trying to delete the message.', 'RED')],
+            embeds: [buildEmbed('An error occurred while trying to delete the message.', 'Red')],
             components: []
           });
 

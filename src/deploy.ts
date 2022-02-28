@@ -1,4 +1,4 @@
-import { ApplicationCommandDataResolvable, ApplicationCommandOptionChoiceData, ApplicationCommandSubCommandData, Client } from 'discord.js';
+import { APIApplicationCommandSubcommandOption, ApplicationCommandDataResolvable, ApplicationCommandOptionChoiceData, ApplicationCommandOptionType, ApplicationCommandType, Client, PermissionFlagsBits } from 'discord.js';
 import logger from './utils/logger';
 
 const token = process.env.BOT_TOKEN;
@@ -7,7 +7,7 @@ if (token === undefined) {
   process.exit(1);
 }
 
-const filterTypes: ApplicationCommandOptionChoiceData[] = [
+const filterTypes: ApplicationCommandOptionChoiceData<string>[] = [
   {
     name: 'Matches any message that contains the filter content verbatim',
     value: 'contains'
@@ -21,21 +21,21 @@ const filterTypes: ApplicationCommandOptionChoiceData[] = [
     value: 'regex'
   }
 ];
-const filterSubCommands: ApplicationCommandSubCommandData[] = [
+const filterSubCommands: APIApplicationCommandSubcommandOption[] = [
   {
-    type: 'SUB_COMMAND',
+    type: ApplicationCommandOptionType.Subcommand,
     name: 'add',
     description: 'Add a new filter',
     options: [
       {
-        type: 'STRING',
+        type: ApplicationCommandOptionType.String,
         name: 'type',
         description: 'The type of filter to apply',
         choices: filterTypes,
         required: true
       },
       {
-        type: 'STRING',
+        type: ApplicationCommandOptionType.String,
         name: 'filter',
         description: 'The content of the filter that gets matched upon based on the filter type',
         required: true
@@ -43,19 +43,19 @@ const filterSubCommands: ApplicationCommandSubCommandData[] = [
     ]
   },
   {
-    type: 'SUB_COMMAND',
+    type: ApplicationCommandOptionType.Subcommand,
     name: 'delete',
     description: 'Delete an existing filter',
     options: [
       {
-        type: 'STRING',
+        type: ApplicationCommandOptionType.String,
         name: 'type',
         description: 'The type of filter to apply',
         choices: filterTypes,
         required: true
       },
       {
-        type: 'STRING',
+        type: ApplicationCommandOptionType.String,
         name: 'filter',
         description: 'The content of the filter that gets matched upon based on the filter type',
         required: true
@@ -63,7 +63,7 @@ const filterSubCommands: ApplicationCommandSubCommandData[] = [
     ]
   },
   {
-    type: 'SUB_COMMAND',
+    type: ApplicationCommandOptionType.Subcommand,
     name: 'list',
     description: 'List all filters'
   }
@@ -71,31 +71,31 @@ const filterSubCommands: ApplicationCommandSubCommandData[] = [
 
 const cmds: ApplicationCommandDataResolvable[] = [
   {
-    type: 'CHAT_INPUT',
+    type: ApplicationCommandType.ChatInput,
     name: 'spoiler-attachments',
     description: 'Send spoilered attachments to this channel from any platform!',
     options: [
       {
-        type: 'STRING',
+        type: ApplicationCommandOptionType.String,
         name: 'caption',
         description: 'A caption to add to your attachments',
         required: false
       }
     ],
-    defaultPermission: true
+    defaultMemberPermissions: PermissionFlagsBits.UseApplicationCommands,
   },
   {
-    type: 'CHAT_INPUT',
+    type: ApplicationCommandType.ChatInput,
     name: 'auto-publish',
     description: 'Manage for which channels messages are automatically published',
     options: [
       {
-        type: 'SUB_COMMAND',
+        type: ApplicationCommandOptionType.Subcommand,
         name: 'start',
         description: 'Start auto-publishing future messages in a channel',
         options: [
           {
-            type: 'CHANNEL',
+            type: ApplicationCommandOptionType.Channel,
             name: 'channel',
             description: 'Channel to start watching',
             required: true
@@ -103,12 +103,12 @@ const cmds: ApplicationCommandDataResolvable[] = [
         ]
       },
       {
-        type: 'SUB_COMMAND',
+        type: ApplicationCommandOptionType.Subcommand,
         name: 'stop',
         description: 'Stop auto-publishing future messages in a channel',
         options: [
           {
-            type: 'CHANNEL',
+            type: ApplicationCommandOptionType.Channel,
             name: 'channel',
             description: 'Channel to stop watching',
             required: true
@@ -116,31 +116,32 @@ const cmds: ApplicationCommandDataResolvable[] = [
         ]
       },
       {
-        type: 'SUB_COMMAND',
+        type: ApplicationCommandOptionType.Subcommand,
         name: 'list',
         description: 'List all channels that are currently auto-published'
       }
     ],
-    defaultPermission: false
+    // permission required to publish any message in the channel
+    defaultMemberPermissions: PermissionFlagsBits.ManageMessages,
   },
   {
-    type: 'CHAT_INPUT',
+    type: ApplicationCommandType.ChatInput,
     name: 'auto-thread-invite',
     description: 'Manage for which channels and roles members are automatically invited to new threads',
     options: [
       {
-        type: 'SUB_COMMAND',
+        type: ApplicationCommandOptionType.Subcommand,
         name: 'start',
         description: 'Start auto-inviting role members to new threads in a channel',
         options: [
           {
-            type: 'CHANNEL',
+            type: ApplicationCommandOptionType.Channel,
             name: 'channel',
             description: 'Channel to start watching',
             required: true
           },
           {
-            type: 'ROLE',
+            type: ApplicationCommandOptionType.Role,
             name: 'role',
             description: 'Role whose members to invite to new threads',
             required: true
@@ -148,18 +149,18 @@ const cmds: ApplicationCommandDataResolvable[] = [
         ]
       },
       {
-        type: 'SUB_COMMAND',
+        type: ApplicationCommandOptionType.Subcommand,
         name: 'stop',
         description: 'Stop auto-inviting role members to new threads in a channel',
         options: [
           {
-            type: 'CHANNEL',
+            type: ApplicationCommandOptionType.Channel,
             name: 'channel',
             description: 'Channel to stop watching',
             required: true
           },
           {
-            type: 'ROLE',
+            type: ApplicationCommandOptionType.Role,
             name: 'role',
             description: 'Role whose members to no longer invite to new threads',
             required: true
@@ -167,12 +168,12 @@ const cmds: ApplicationCommandDataResolvable[] = [
         ]
       },
       {
-        type: 'SUB_COMMAND',
+        type: ApplicationCommandOptionType.Subcommand,
         name: 'list',
         description: 'List all channels that are currently watched for new threads',
         options: [
           {
-            type: 'CHANNEL',
+            type: ApplicationCommandOptionType.Channel,
             name: 'channel',
             description: 'Channel to get automatically invited roles for',
             required: false
@@ -180,103 +181,104 @@ const cmds: ApplicationCommandDataResolvable[] = [
         ]
       }
     ],
-    defaultPermission: false
+    // permission required to see all private threads
+    defaultMemberPermissions: PermissionFlagsBits.ManageThreads,
   },
   {
-    type: 'CHAT_INPUT',
+    type: ApplicationCommandType.ChatInput,
     name: 'raw',
     description: 'Get the raw contents of a message',
     options: [
       {
-        type: 'STRING',
+        type: ApplicationCommandOptionType.String,
         name: 'message',
         description: 'Link to a message',
         required: true
       }
     ],
-    defaultPermission: true
+    defaultMemberPermissions: PermissionFlagsBits.UseApplicationCommands,
   },
   {
-    type: 'CHAT_INPUT',
+    type: ApplicationCommandType.ChatInput,
     name: 'message-filter',
-    defaultPermission: false,
+    defaultMemberPermissions: PermissionFlagsBits.ManageMessages,
     description: 'Manage message filters for this server',
     options: [
       {
-        type: 'SUB_COMMAND_GROUP',
+        type: ApplicationCommandOptionType.SubcommandGroup,
         name: 'forbidden',
         description: 'Manage forbidden words and phrases',
         options: filterSubCommands
       },
       {
-        type: 'SUB_COMMAND_GROUP',
+        type: ApplicationCommandOptionType.SubcommandGroup,
         name: 'allowed',
         description: 'Manage words and phrases that are explicitly allowed (and take priority over forbbiden words)',
         options: filterSubCommands
       },
       {
-        type: 'SUB_COMMAND_GROUP',
+        type: ApplicationCommandOptionType.SubcommandGroup,
         name: 'exemptions',
         description: 'Manage exemptions to the message filter',
         options: [
           {
-            type: 'SUB_COMMAND',
+            type: ApplicationCommandOptionType.Subcommand,
             name: 'add',
             description: 'Add an exemption. Must provide exactly one of the available options',
             options: [
               {
-                type: 'USER',
+                type: ApplicationCommandOptionType.User,
                 name: 'user',
                 description: 'The user to exempt'
               },
               {
-                type: 'ROLE',
+                type: ApplicationCommandOptionType.Role,
                 name: 'role',
                 description: 'The role to exempt'
               },
               {
-                type: 'CHANNEL',
+                type: ApplicationCommandOptionType.Channel,
                 name: 'channel',
                 description: 'The channel to exempt'
               }
             ]
           },
           {
-            type: 'SUB_COMMAND',
+            type: ApplicationCommandOptionType.Subcommand,
             name: 'delete',
             description: 'Delete an exemption. Must provide exactly one of the available options',
             options: [
               {
-                type: 'USER',
+                type: ApplicationCommandOptionType.User,
                 name: 'user',
                 description: 'The user to exempt'
               },
               {
-                type: 'ROLE',
+                type: ApplicationCommandOptionType.Role,
                 name: 'role',
                 description: 'The role to exempt'
               },
               {
-                type: 'CHANNEL',
+                type: ApplicationCommandOptionType.Channel,
                 name: 'channel',
                 description: 'The channel to exempt'
               }
             ]
           },
           {
-            type: 'SUB_COMMAND',
+            type: ApplicationCommandOptionType.Subcommand,
             name: 'list',
             description: 'List all exemptions'
           }
         ]
       },
       {
-        type: 'SUB_COMMAND',
+        type: ApplicationCommandOptionType.Subcommand,
         name: 'test',
         description: 'Test the filters against an example message',
         options: [
           {
-            type: 'STRING',
+            type: ApplicationCommandOptionType.String,
             name: 'text',
             description: 'The text to filter',
             required: true
@@ -284,12 +286,12 @@ const cmds: ApplicationCommandDataResolvable[] = [
         ]
       },
       {
-        type: 'SUB_COMMAND',
+        type: ApplicationCommandOptionType.Subcommand,
         name: 'set-logging-channel',
         description: 'Specify the channel where deletions should be logged',
         options: [
           {
-            type: 'CHANNEL',
+            type: ApplicationCommandOptionType.Channel,
             name: 'channel',
             description: 'The log channel to use',
             required: true

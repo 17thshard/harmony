@@ -1,4 +1,4 @@
-import { Client, ColorResolvable, CommandInteraction, Message, MessageEmbed, PartialMessage, Snowflake, TextChannel } from 'discord.js';
+import { ChatInputCommandInteraction, Client, ColorResolvable, Message, PartialMessage, Snowflake, TextChannel, EmbedBuilder } from 'discord.js';
 import IntervalTree from 'node-interval-tree';
 import { escape, sanitize } from '../../utils/message-utils';
 import { deserialize as deserializeFilter, FilterResult, MessageFilter } from './filters';
@@ -14,8 +14,8 @@ const collections = guilds.view<FilterCollection>(
 );
 const exemptions = guilds.view<Array<MessageFilterExemption>>('messageFilter.exemptions', raw => raw.map(deserializeExemption));
 
-function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
-  const embed = new MessageEmbed()
+function buildEmbed (message: string, color?: ColorResolvable): EmbedBuilder {
+  const embed = new EmbedBuilder()
     .setTitle('Message Filter')
     .setDescription(message);
 
@@ -53,7 +53,7 @@ function applyFilters (
 
 async function filter (client: Client, message: Message | PartialMessage): Promise<void> {
   // Always ignore self and non-guild messages
-  if (message.author.id === client.user.id || message.channel.type === 'DM') {
+  if (message.author.id === client.user.id || message.channel.isDMBased()) {
     return;
   }
 
@@ -85,12 +85,12 @@ async function filter (client: Client, message: Message | PartialMessage): Promi
   try {
     await message.author.send({
       embeds: [
-        new MessageEmbed()
+        new EmbedBuilder()
           .setTitle('Message Filter')
           .setDescription(`Your message in ${message.channel} was deleted due to containing forbidden words.\nIf you wish to repost it without banned words, here is the original markup:\n\n${escape(
             message.content)}`)
-          .setColor('RED')
-          .setFooter('Message filtered')
+          .setColor('Red')
+          .setFooter({ text: 'Message filtered' })
           .setTimestamp(new Date())
       ],
       allowedMentions: { parse: [] }
@@ -111,7 +111,7 @@ async function filter (client: Client, message: Message | PartialMessage): Promi
   }
 
   const loggingChannel = await client.channels.fetch(loggingChannelId) as TextChannel;
-  const afterEditMessage = message.editedAt !== null ? ' after edit' : '';
+  const aftereditMessage = message.editedAt !== null ? ' after edit' : '';
   const appliedFilters = Object.values(
     forbidden.reduce(
       (acc, { filter }) => {
@@ -124,11 +124,11 @@ async function filter (client: Client, message: Message | PartialMessage): Promi
   ).join('\n');
   await loggingChannel.send({
     embeds: [
-      new MessageEmbed()
+      new EmbedBuilder()
         .setTitle('Message Filter')
-        .setDescription(`Message by ${message.author} deleted from ${message.channel}${afterEditMessage}.\n\nApplied filters:\n${appliedFilters}`)
+        .setDescription(`Message by ${message.author} deleted from ${message.channel}${aftereditMessage}.\n\nApplied filters:\n${appliedFilters}`)
         .setTimestamp(message.editedAt !== null ? message.editedAt : message.createdAt)
-        .setFooter(notifiedUser ? '' : 'Could not send notification DM to user')
+        .setFooter({ text: notifiedUser ? '' : 'Could not send notification DM to user' })
     ],
     allowedMentions: { parse: [] }
   });
@@ -136,7 +136,7 @@ async function filter (client: Client, message: Message | PartialMessage): Promi
 
 function buildFilterManagement (collectionType: keyof FilterCollection) {
   return {
-    async add (client: Client, interaction: CommandInteraction) {
+    async add (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
       const type = interaction.options.getString('type', true);
       const content = interaction.options.getString('filter', true);
 
@@ -147,7 +147,7 @@ function buildFilterManagement (collectionType: keyof FilterCollection) {
       })) {
         await interaction.reply({
           embeds: [
-            buildEmbed(`This '${type}' filter already exists!`, 'RED')
+            buildEmbed(`This '${type}' filter already exists!`, 'Red')
           ],
           ephemeral: true
         });
@@ -175,7 +175,7 @@ function buildFilterManagement (collectionType: keyof FilterCollection) {
           embeds: [
             buildEmbed(
               `An error occurred while trying to add the filter of type '${type}':\n\`\`\`${escape(content)}\`\`\``,
-              'RED'
+              'Red'
             )
           ]
         });
@@ -190,7 +190,7 @@ function buildFilterManagement (collectionType: keyof FilterCollection) {
         allowedMentions: { parse: [] }
       });
     },
-    async delete (client: Client, interaction: CommandInteraction) {
+    async delete (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
       const type = interaction.options.getString('type', true);
       const content = interaction.options.getString('filter', true);
 
@@ -220,7 +220,7 @@ function buildFilterManagement (collectionType: keyof FilterCollection) {
           embeds: [
             buildEmbed(
               `An error occurred while trying to delete the filter of type '${type}':\n\`\`\`${escape(content)}\`\`\``,
-              'RED'
+              'Red'
             )
           ]
         });
@@ -243,7 +243,7 @@ function buildFilterManagement (collectionType: keyof FilterCollection) {
           embeds: [
             buildEmbed(
               `There is no filter of type '${type}' matching:\n\`\`\`${escape(content)}\`\`\``,
-              'RED'
+              'Red'
             )
           ]
         });
@@ -260,7 +260,7 @@ function buildFilterManagement (collectionType: keyof FilterCollection) {
         allowedMentions: { parse: [] }
       });
     },
-    async list (client: Client, interaction: CommandInteraction) {
+    async list (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
       try {
         const storedCollection = collections.get(interaction.guildId, { allowed: [], forbidden: [] });
         const filters = storedCollection[collectionType];
@@ -287,7 +287,7 @@ function buildFilterManagement (collectionType: keyof FilterCollection) {
           }
         });
 
-        await interaction.reply({ embeds: [buildEmbed(`An error occurred while trying to list all ${collectionType} filters`, 'RED')] });
+        await interaction.reply({ embeds: [buildEmbed(`An error occurred while trying to list all ${collectionType} filters`, 'Red')] });
       }
     }
   };
@@ -300,7 +300,7 @@ export default {
       forbidden: buildFilterManagement('forbidden'),
       allowed: buildFilterManagement('allowed'),
       exemptions: {
-        async add (client: Client, interaction: CommandInteraction) {
+        async add (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
           const user = interaction.options.getUser('user', false);
           const role = interaction.options.getRole('role', false);
           const channel = interaction.options.getChannel('channel', false);
@@ -309,7 +309,7 @@ export default {
           if (options.length !== 1) {
             await interaction.reply({
               embeds: [
-                buildEmbed('You must provide exactly one of the options for exemptions!', 'RED')
+                buildEmbed('You must provide exactly one of the options for exemptions!', 'Red')
               ],
               ephemeral: true
             });
@@ -327,7 +327,7 @@ export default {
           })) {
             await interaction.reply({
               embeds: [
-                buildEmbed(`There already exists an exemption for this ${type}!`, 'RED')
+                buildEmbed(`There already exists an exemption for this ${type}!`, 'Red')
               ],
               ephemeral: true
             });
@@ -356,7 +356,7 @@ export default {
               embeds: [
                 buildEmbed(
                   `An error occurred while trying to add the exemption for the ${type}`,
-                  'RED'
+                  'Red'
                 )
               ]
             });
@@ -371,7 +371,7 @@ export default {
             allowedMentions: { parse: [] }
           });
         },
-        async delete (client: Client, interaction: CommandInteraction) {
+        async delete (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
           const user = interaction.options.getUser('user', false);
           const role = interaction.options.getRole('role', false);
           const channel = interaction.options.getChannel('channel', false);
@@ -380,7 +380,7 @@ export default {
           if (options.length !== 1) {
             await interaction.reply({
               embeds: [
-                buildEmbed('You must provide exactly one of the options for exemptions!', 'RED')
+                buildEmbed('You must provide exactly one of the options for exemptions!', 'Red')
               ],
               ephemeral: true
             });
@@ -417,7 +417,7 @@ export default {
               embeds: [
                 buildEmbed(
                   `An error occurred while trying to delete the exemption for the ${type}`,
-                  'RED'
+                  'Red'
                 )
               ]
             });
@@ -440,7 +440,7 @@ export default {
               embeds: [
                 buildEmbed(
                   `There is no exemption for this ${type}!`,
-                  'RED'
+                  'Red'
                 )
               ]
             });
@@ -455,7 +455,7 @@ export default {
             allowedMentions: { parse: [] }
           });
         },
-        async list (client: Client, interaction: CommandInteraction) {
+        async list (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
           try {
             const storedExemptions = exemptions.get(interaction.guildId, []);
 
@@ -485,14 +485,14 @@ export default {
               embeds: [
                 buildEmbed(
                   'An error occurred while trying to list all message filter exemptions',
-                  'RED'
+                  'Red'
                 )
               ]
             });
           }
         }
       },
-      async test (client: Client, interaction: CommandInteraction) {
+      async test (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
         const input = interaction.options.getString('text', true);
 
         const filterCollection = collections.get(interaction.guildId);
@@ -501,7 +501,7 @@ export default {
             embeds: [
               buildEmbed(
                 'There are no filters configured for this server.',
-                'RED'
+                'Red'
               )
             ]
           });
@@ -541,7 +541,7 @@ export default {
           embeds: [buildEmbed(message)]
         });
       },
-      async 'set-logging-channel' (client: Client, interaction: CommandInteraction) {
+      async 'set-logging-channel' (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
         const channel = interaction.options.getChannel('channel', true);
 
         try {
@@ -560,7 +560,7 @@ export default {
             embeds: [
               buildEmbed(
                 'An error occurred while trying to set the logging channel',
-                'RED'
+                'Red'
               )
             ]
           });

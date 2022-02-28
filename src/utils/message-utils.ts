@@ -1,3 +1,4 @@
+import { EscapeMarkdownOptions, escapeMarkdown } from 'discord.js';
 import markdown, { Capture, Parser, SingleASTNode, State } from 'simple-markdown';
 
 const rules = {
@@ -200,17 +201,34 @@ export function sanitize (source: string): string {
   return parsed.map(sanitizeNode).join('');
 }
 
-// Discord doesn't allow escaping backticks inside a code block, so if
-// we want accurate source, we can't use code blocks, have to escape it
-// all instead
-export function escape (content: string): string {
-  return content.replaceAll('\\', '\\\\')
-    .replaceAll('*', '\\*')
-    .replaceAll('_', '\\_')
-    .replaceAll('`', '\\`')
-    .replaceAll('|', '\\|')
-    .replaceAll('~', '\\~')
-    .replaceAll('>', '\\>')
-    .replaceAll('<', '\\<');
+/**
+ * Escapes mention-like formatting in a string (user and role mentions, channel
+ * links, timestamps, anything with an angle bracket, and also @everyone/@here).
+ */
+export const escapeMentionLike = (text: string): string => text
+  .replaceAll('<', '\\<')
+  .replaceAll('>', '\\>')
+  .replaceAll('@', '\\@');
+
+/**
+ * Escapes backslashes in a string.
+ */
+export const escapeBackslash = (text: string): string => text
+  .replaceAll('\\', '\\\\');
+
+/** @see escape */
+export type ExpandedEscapeOptions = EscapeMarkdownOptions & {
+  mentionLike: boolean,
+  backslash: boolean,
 }
 
+/**
+ * Escapes Discord-style Markdown in a string. Handles a few extra things but
+ * then passes it off to discord.js's {@linkcode Util.escapeMarkdown}, so it
+ * supports any options that that function does, in addition to its custom ones.
+ */
+export function escape (text: string, options = {} as ExpandedEscapeOptions): string {
+  if (options.backslash ?? true) text = escapeBackslash(text);
+  if (options.mentionLike ?? true) text = escapeMentionLike(text);
+  return escapeMarkdown(text, { ...options });
+}
