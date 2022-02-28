@@ -1,11 +1,11 @@
 import { ComplexCommand } from '../commands';
 import {
-  AnyChannel,
+  Channel,
+  ChannelType,
+  ChatInputCommandInteraction,
   Client,
   ColorResolvable,
-  CommandInteraction, GuildChannel,
-  MessageEmbed,
-  Permissions,
+  EmbedBuilder,
   Role,
   Snowflake,
   TextChannel,
@@ -14,8 +14,8 @@ import {
 import { guilds as storage } from '../utils/storage';
 import logger from '../utils/logger';
 
-function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
-  const embed = new MessageEmbed()
+function buildEmbed (message: string, color?: ColorResolvable): EmbedBuilder {
+  const embed = new EmbedBuilder()
     .setTitle('Auto Thread Invite')
     .setDescription(message);
 
@@ -30,28 +30,28 @@ export default {
   command: new ComplexCommand(
     'auto-thread-invite',
     {
-      async start (client: Client, interaction: CommandInteraction) {
-        const channel = client.channels.resolve(interaction.options.getChannel('channel', true).id) as GuildChannel;
+      async start (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
+        const channel = interaction.options.getChannel('channel', true);
         const role = interaction.options.getRole('role', true);
 
-        if (!channel.isText() || channel.isThread()) {
+        if (channel.type !== ChannelType.GuildText) {
           await interaction.reply({
             embeds: [
               buildEmbed(
                 `${channel} is not a text channel and does not support threads!`,
-                'RED'
+                'Red'
               )
             ]
           });
           return;
         }
 
-        if (!channel.permissionsFor(interaction.user).has(Permissions.FLAGS.MANAGE_THREADS)) {
+        if (!channel.permissionsFor(interaction.user).has('ManageThreads')) {
           await interaction.reply({
             embeds: [
               buildEmbed(
                 `Cannot watch ${channel} for automatic thread invites, you do not have permissions to manage threads there!`,
-                'RED'
+                'Red'
               )
             ]
           });
@@ -91,7 +91,7 @@ export default {
             embeds: [
               buildEmbed(
                 `An error occurred while trying to start watching threads in ${channel}`,
-                'RED'
+                'Red'
               )
             ]
           });
@@ -106,16 +106,16 @@ export default {
           allowedMentions: { parse: [] }
         });
       },
-      async stop (client: Client, interaction: CommandInteraction) {
-        const channel = client.channels.resolve(interaction.options.getChannel('channel', true).id) as GuildChannel;
+      async stop (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
+        const channel = interaction.options.getChannel('channel', true);
         const role = interaction.options.getRole('role', true);
 
-        if (channel.isText() && !channel.permissionsFor(interaction.user).has(Permissions.FLAGS.MANAGE_THREADS)) {
+        if (channel.type === ChannelType.GuildText && !channel.permissionsFor(interaction.user).has('ManageThreads')) {
           await interaction.reply({
             embeds: [
               buildEmbed(
                 `You must be able to manage threads in ${channel} to manage thread auto invites there!`,
-                'RED'
+                'Red'
               )
             ]
           });
@@ -129,7 +129,7 @@ export default {
             embeds: [
               buildEmbed(
                 `${role} members are not automatically invited to new threads in ${channel}!`,
-                'RED'
+                'Red'
               )
             ],
             allowedMentions: { parse: [] }
@@ -159,7 +159,7 @@ export default {
             }
           });
 
-          await interaction.reply({ embeds: [buildEmbed(`An error occurred while trying to stop watching threads in ${channel}`, 'RED')] });
+          await interaction.reply({ embeds: [buildEmbed(`An error occurred while trying to stop watching threads in ${channel}`, 'Red')] });
 
           return;
         }
@@ -171,7 +171,7 @@ export default {
           allowedMentions: { parse: [] }
         });
       },
-      async list (client: Client, interaction: CommandInteraction) {
+      async list (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
         try {
           const filterChannel = interaction.options.getChannel('channel', false);
           const channelsWithRoles = storage.channels(interaction.guildId).list<Record<Snowflake, boolean>>('autoThreadInvite');
@@ -187,10 +187,10 @@ export default {
 
           const grouped = resolvedRoles.reduce(
             (acc, item) => {
-              acc[item.channel.id.toString()] = item.roles.map(role => ({ channel: item.channel, role }));
+              acc[item.channel.id] = item.roles.map(role => ({ channel: item.channel, role }));
               return acc;
             },
-            {} as Record<string, Array<{ channel: AnyChannel, role: Role }>>
+            {} as Record<string, Array<{ channel: Channel, role: Role }>>
           );
 
           const instructionMessage = 'To start inviting role members to new threads in a channel, use the \`/auto-thread-invite start #channel @role\` command.\nTo stop inviting role members, use the \`/auto-thread-invite stop #channel @role\` command';
@@ -230,7 +230,7 @@ export default {
             }
           });
 
-          await interaction.reply({ embeds: [buildEmbed('An error occurred while trying to list all watched channels', 'RED')] });
+          await interaction.reply({ embeds: [buildEmbed('An error occurred while trying to list all watched channels', 'Red')] });
         }
       }
     }

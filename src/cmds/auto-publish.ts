@@ -1,21 +1,10 @@
 import { ComplexCommand } from '../commands';
-import {
-  Client,
-  ColorResolvable,
-  CommandInteraction,
-  GuildTextBasedChannel,
-  Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
-  Permissions,
-  TextChannel
-} from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, Client, ColorResolvable, EmbedBuilder, Message, TextChannel } from 'discord.js';
 import { guilds as storage } from '../utils/storage';
 import logger from '../utils/logger';
 
-function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
-  const embed = new MessageEmbed()
+function buildEmbed(message: string, color?: ColorResolvable): EmbedBuilder {
+  const embed = new EmbedBuilder()
     .setTitle('Auto Publish')
     .setDescription(message);
 
@@ -26,13 +15,14 @@ function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
   return embed;
 }
 
-async function publishMessage (message: Message): Promise<boolean> {
+async function publishMessage(message: Message): Promise<boolean> {
   const channelStorage = storage.channels(message.guildId);
   if (channelStorage.get(message.channelId, 'autoPublish') !== true) {
     return true;
   }
 
-  const channelName = `#${(message.channel as GuildTextBasedChannel).name}`;
+  if (message.channel.type !== ChannelType.GuildNews) return;
+  const channelName = `#${message.channel.name}`;
 
   try {
     logger.info({
@@ -74,27 +64,27 @@ export default {
   command: new ComplexCommand(
     'auto-publish',
     {
-      async start (client: Client, interaction: CommandInteraction) {
+      async start(client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
         const channel = interaction.options.getChannel('channel', true);
 
-        if (channel.type !== 'GUILD_NEWS') {
+        if (channel.type !== ChannelType.GuildNews) {
           await interaction.reply({
             embeds: [
               buildEmbed(
                 `Cannot watch ${channel} for auto-publishing, as it is not an announcement channel!`,
-                'RED'
+                'Red'
               )
             ]
           });
           return;
         }
 
-        if (!channel.permissionsFor(interaction.user).has(Permissions.FLAGS.MANAGE_MESSAGES)) {
+        if (!channel.permissionsFor(interaction.user).has('ManageMessages')) {
           await interaction.reply({
             embeds: [
               buildEmbed(
                 `Cannot watch ${channel} for auto-publishing, you do not have permissions to manage messages there!`,
-                'RED'
+                'Red'
               )
             ]
           });
@@ -121,7 +111,7 @@ export default {
             }
           });
 
-          await interaction.reply({ embeds: [buildEmbed(`An error occurred while trying to start watching ${channel}`, 'RED')] });
+          await interaction.reply({ embeds: [buildEmbed(`An error occurred while trying to start watching ${channel}`, 'Red')] });
 
           return;
         }
@@ -130,15 +120,15 @@ export default {
 
         await interaction.reply({ embeds: [buildEmbed(`Started watching ${channel}! New messages will be automatically published.`)] });
       },
-      async stop (client: Client, interaction: CommandInteraction) {
+      async stop(client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
         const channel = interaction.options.getChannel('channel', true);
 
-        if (channel.type === 'GUILD_NEWS' && !channel.permissionsFor(interaction.user).has(Permissions.FLAGS.MANAGE_MESSAGES)) {
+        if (channel.type === ChannelType.GuildNews && !channel.permissionsFor(interaction.user).has('ManageMessages')) {
           await interaction.reply({
             embeds: [
               buildEmbed(
                 `You must be able to manage messages in ${channel} to manage its auto-publishing status!`,
-                'RED'
+                'Red'
               )
             ]
           });
@@ -146,7 +136,7 @@ export default {
         }
 
         if (storage.channels(interaction.guildId).get(channel.id, 'autoPublish') !== true) {
-          await interaction.reply({ embeds: [buildEmbed(`${channel} is not being watched for new messages!`, 'RED')] });
+          await interaction.reply({ embeds: [buildEmbed(`${channel} is not being watched for new messages!`, 'Red')] });
           return;
         }
 
@@ -165,7 +155,7 @@ export default {
             }
           });
 
-          await interaction.reply({ embeds: [buildEmbed(`An error occurred while trying to stop watching ${channel}`, 'RED')] });
+          await interaction.reply({ embeds: [buildEmbed(`An error occurred while trying to stop watching ${channel}`, 'Red')] });
 
           return;
         }
@@ -174,7 +164,7 @@ export default {
 
         await interaction.reply({ embeds: [buildEmbed(`Stopped watching ${channel}! New messages will no longer be automatically published.`)] });
       },
-      async list (client: Client, interaction: CommandInteraction) {
+      async list(client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
         try {
           const channelStorage = storage.channels(interaction.guildId);
           const values = channelStorage.list('autoPublish');
@@ -207,18 +197,14 @@ export default {
             }
           });
 
-          await interaction.reply({ embeds: [buildEmbed('An error occurred while trying to list all watched channels', 'RED')] });
+          await interaction.reply({ embeds: [buildEmbed('An error occurred while trying to list all watched channels', 'Red')] });
         }
       }
     }
   ),
   additionalHandlers: {
-    async messageCreate (client: Client, message: Message): Promise<void> {
-      if (!message.channel.isText()) {
-        return;
-      }
-
-      if (message.channel.type !== 'GUILD_NEWS') {
+    async messageCreate(client: Client, message: Message): Promise<void> {
+      if (message.channel.type !== ChannelType.GuildNews) {
         return;
       }
 
@@ -232,7 +218,7 @@ export default {
             message: `Failed to auto-publish message from ${message.author.tag}`,
             error,
             context: {
-              channel: `#${(message.channel as GuildTextBasedChannel).name}`,
+              channel: `#${message.channel.name}`,
               guild: message.guildId
             }
           });
@@ -256,17 +242,16 @@ export default {
         embeds: [
           buildEmbed(
             `Failed to auto-publish message from ${message.author} in ${message.channel}!`,
-            'RED'
+            'Red'
           )
         ],
-        components: [
-          new MessageActionRow().addComponents([
-            new MessageButton()
-              .setStyle('LINK')
+        components: [new ActionRowBuilder<ButtonBuilder>()
+          .addComponents([
+            new ButtonBuilder()
+              .setStyle(ButtonStyle.Link)
               .setLabel('Go to message')
               .setURL(`https://discord.com/channels/${message.guildId}/${message.channelId}/${message.id}`)
-          ])
-        ]
+          ])]
       });
     }
   }

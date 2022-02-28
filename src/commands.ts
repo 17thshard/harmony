@@ -1,4 +1,4 @@
-import { Awaitable, Client, CommandInteraction, TextChannel } from 'discord.js';
+import { Awaitable, ChatInputCommandInteraction, Client, CommandInteraction, TextChannel } from 'discord.js';
 import logger from './utils/logger';
 
 type CommandHandler = (client: Client, interaction: CommandInteraction) => Awaitable<void>
@@ -21,7 +21,7 @@ export class ComplexCommand extends Command {
     super(name);
   }
 
-  public async handle (client: Client, interaction: CommandInteraction): Promise<void> {
+  public async handle (client: Client, interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const subCommandGroup = interaction.options.getSubcommandGroup(false);
     const subCommand = interaction.options.getSubcommand(false);
 

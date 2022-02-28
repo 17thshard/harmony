@@ -1,4 +1,4 @@
-import { Awaitable, Client, ClientEvents, FetchedThreads, Guild, Intents, TextChannel, ThreadChannel } from 'discord.js';
+import { ActivityType, Awaitable, Client, ClientEvents, FetchedThreads, Guild, TextChannel, ThreadChannel } from 'discord.js';
 import autoPublish from './cmds/auto-publish';
 import spoilerAttachments from './cmds/spoiler-attachments';
 import autoThreadInvite from './cmds/auto-thread-invite';
@@ -15,10 +15,11 @@ if (token === undefined) {
 
 const client = new Client({
   intents: [
-    Intents.FLAGS.GUILDS,
-    Intents.FLAGS.GUILD_MEMBERS,
-    Intents.FLAGS.GUILD_MESSAGES,
-    Intents.FLAGS.DIRECT_MESSAGES
+    'Guilds',
+    'GuildMembers',
+    'GuildMessages',
+    'DirectMessages',
+    'MessageContent',
   ]
 });
 
@@ -44,7 +45,7 @@ const commands = modules.reduce<{ [name: string]: Command }>(
 client.once('ready', async () => {
   logger.info('Ready!');
   client.user?.setActivity({
-    type: 'WATCHING',
+    type: ActivityType.Watching,
     name: 'YOU 👁👁'
   });
   await Promise.all(client.guilds.valueOf().map(joinActiveThreads));
