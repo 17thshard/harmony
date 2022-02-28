@@ -1,11 +1,11 @@
 import { Awaitable, Client, ClientEvents, FetchedThreads, Guild, Intents, TextChannel, ThreadChannel } from 'discord.js';
-import autoPublish from './auto-publish';
-import spoilerAttachments from './spoiler-attachments';
-import autoThreadInvite from './auto-thread-invite';
-import rawMessage from './raw-message';
-import messageFilter from './message-filter';
+import autoPublish from './cmds/auto-publish';
+import spoilerAttachments from './cmds/spoiler-attachments';
+import autoThreadInvite from './cmds/auto-thread-invite';
+import rawMessage from './cmds/raw-message';
+import messageFilter from './cmds/message-filter';
 import { Command } from './commands';
-import logger from './logger';
+import logger from './utils/logger';
 
 const token = process.env.BOT_TOKEN;
 if (token === undefined) {

@@ -1,10 +1,10 @@
 import { Client, ColorResolvable, CommandInteraction, Message, MessageEmbed, PartialMessage, Snowflake, TextChannel } from 'discord.js';
 import IntervalTree from 'node-interval-tree';
-import { escape, sanitize } from '../message-utils';
+import { escape, sanitize } from '../../utils/message-utils';
 import { deserialize as deserializeFilter, MessageFilter } from './filters';
-import { guilds } from '../storage';
-import { ComplexCommand } from '../commands';
-import logger from '../logger';
+import { guilds } from '../../utils/storage';
+import { ComplexCommand } from '../../commands';
+import logger from '../../utils/logger';
 import { deserialize as deserializeExemption, MessageFilterExemption } from './exemptions';
 
 type FilterCollection = { allowed: Array<MessageFilter>, forbidden: Array<MessageFilter> }

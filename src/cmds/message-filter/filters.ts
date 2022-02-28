@@ -1,4 +1,4 @@
-import { escape } from '../message-utils';
+import { escape } from '../../utils/message-utils';
 
 export interface MessageFilter {
   match (content: string): Array<FilterResult>;

@@ -1,5 +1,5 @@
 import { Awaitable, Client, CommandInteraction, TextChannel } from 'discord.js';
-import logger from './logger';
+import logger from './utils/logger';
 
 type CommandHandler = (client: Client, interaction: CommandInteraction) => Awaitable<void>
 
