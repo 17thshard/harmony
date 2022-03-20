@@ -122,7 +122,7 @@ modules.forEach((module) => {
           await handle.call(undefined, client, ...args);
         } catch (error) {
           logger.error({
-            message: `Failed to run '${key}' handler for module'`,
+            message: `Failed to run '${key}' handler for module`,
             error
           });
         }

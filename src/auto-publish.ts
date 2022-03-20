@@ -1,5 +1,14 @@
 import { ComplexCommand } from './commands';
-import { Client, ColorResolvable, CommandInteraction, Message, MessageEmbed, Permissions, TextChannel } from 'discord.js';
+import {
+  Client,
+  ColorResolvable,
+  CommandInteraction,
+  GuildTextBasedChannel,
+  Message,
+  MessageEmbed,
+  Permissions,
+  TextChannel
+} from 'discord.js';
 import { guilds as storage } from './storage';
 import logger from './logger';
 
@@ -13,6 +22,50 @@ function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
   }
 
   return embed;
+}
+
+async function publishMessage (message: Message): Promise<boolean> {
+  const channelStorage = storage.channels(message.guildId);
+  if (channelStorage.get(message.channelId, 'autoPublish') !== true) {
+    return true;
+  }
+
+  const channelName = `#${(message.channel as GuildTextBasedChannel).name}`;
+
+  try {
+    logger.info({
+      message: `Auto-publishing a message from ${message.author.tag}...`,
+      context: {
+        channel: channelName,
+        guild: message.guildId
+      }
+    });
+
+    await message.crosspost();
+    logger.info({
+      message: `Auto-published message from ${message.author.tag}`,
+      context: {
+        channel: channelName,
+        guild: message.guildId
+      }
+    });
+  } catch (error) {
+    logger.error({
+      message: `Failed to auto-publish message from ${message.author.tag}`,
+      error,
+      context: {
+        channel: channelName,
+        guild: message.guildId
+      }
+    });
+
+    return false;
+  }
+
+  const currentStats = channelStorage.get(message.channelId, 'autoPublish.stats', v => v, 0);
+  channelStorage.set(message.channelId, 'autoPublish.stats', currentStats + 1);
+
+  return true;
 }
 
 export default {
@@ -167,43 +220,44 @@ export default {
         return;
       }
 
-      const channelStorage = storage.channels(message.guildId);
-      if (channelStorage.get(message.channelId, 'autoPublish') !== true) {
+      for (let trial = 1; trial <= 3; trial++) {
+        try {
+          if (await publishMessage(message)) {
+            return;
+          }
+        } catch (error) {
+          logger.error({
+            message: `Failed to auto-publish message from ${message.author.tag}`,
+            error,
+            context: {
+              channel: `#${(message.channel as GuildTextBasedChannel).name}`,
+              guild: message.guildId
+            }
+          });
+        }
+
+        if (trial < 3) {
+          logger.warn(`Failed to auto-publish message in try #${trial}. Trying again...`);
+        }
+      }
+
+      logger.error('Failed to auto-publish message after multiple retries');
+
+      const adminId = process.env.HARMONY_ADMIN_USER;
+      if (adminId === undefined || adminId === '') {
         return;
       }
 
-      try {
-        logger.info({
-          message: `Auto-publishing a message from ${message.author.tag}...`,
-          context: {
-            channel: `#${message.channel.name}`,
-            guild: message.guildId
-          }
-        });
-
-        await message.crosspost();
-        logger.info({
-          message: `Auto-published message from ${message.author.tag}`,
-          context: {
-            channel: `#${message.channel.name}`,
-            guild: message.guildId
-          }
-        });
-      } catch (error) {
-        logger.error({
-          message: `Failed to auto-publish message from ${message.author.tag}`,
-          error,
-          context: {
-            channel: `#${message.channel.name}`,
-            guild: message.guildId
-          }
-        });
-
-        return;
-      }
-
-      const currentStats = channelStorage.get(message.channelId, 'autoPublish.stats', v => v, 0);
-      channelStorage.set(message.channelId, 'autoPublish.stats', currentStats + 1);
+      logger.info('Notifying admin about failed retries...');
+      const adminUser = await client.users.fetch(adminId);
+      await adminUser.send({
+        embeds: [
+          buildEmbed(
+            `Failed to auto-publish message from ${message.author} in ${message.channel}!`,
+            'RED'
+          )
+        ]
+      });
     }
   }
 };
