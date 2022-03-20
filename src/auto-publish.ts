@@ -5,6 +5,8 @@ import {
   CommandInteraction,
   GuildTextBasedChannel,
   Message,
+  MessageActionRow,
+  MessageButton,
   MessageEmbed,
   Permissions,
   TextChannel
@@ -256,6 +258,14 @@ export default {
             `Failed to auto-publish message from ${message.author} in ${message.channel}!`,
             'RED'
           )
+        ],
+        components: [
+          new MessageActionRow().addComponents([
+            new MessageButton()
+              .setStyle('LINK')
+              .setLabel('Go to message')
+              .setURL(`https://discord.com/channels/${message.guildId}/${message.channelId}/${message.id}`)
+          ])
         ]
       });
     }
