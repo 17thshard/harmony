@@ -1,7 +1,7 @@
 import { Client, ColorResolvable, CommandInteraction, Message, MessageEmbed, PartialMessage, Snowflake, TextChannel } from 'discord.js';
 import IntervalTree from 'node-interval-tree';
 import { escape, sanitize } from '../../utils/message-utils';
-import { deserialize as deserializeFilter, MessageFilter } from './filters';
+import { deserialize as deserializeFilter, FilterResult, MessageFilter } from './filters';
 import { guilds } from '../../utils/storage';
 import { ComplexCommand } from '../../commands';
 import logger from '../../utils/logger';
@@ -26,6 +26,31 @@ function buildEmbed (message: string, color?: ColorResolvable): MessageEmbed {
   return embed;
 }
 
+type AnnotatedFilterResult = { filter: MessageFilter, result: FilterResult };
+type FilterApplication = { allowed: AnnotatedFilterResult[], forbidden: AnnotatedFilterResult[], applied: AnnotatedFilterResult[] };
+
+function applyFilters (
+  filters: FilterCollection,
+  text: string
+): FilterApplication {
+  const result: FilterApplication = { allowed: [], forbidden: [], applied: [] };
+
+  const sanitized = sanitize(text).toLowerCase();
+  const allowed = new IntervalTree();
+  filters.allowed.flatMap(filter => filter.match(sanitized).map(result => ({ filter, result }))).forEach(match => {
+    allowed.insert(match.result.interval.low, match.result.interval.high, null);
+    result.allowed.push(match);
+  });
+  result.applied = filters.forbidden
+    .flatMap(filter => filter.match(sanitized).map(match => {
+      result.forbidden.push({ result: match, filter });
+      return { result: match, filter };
+    }))
+    .filter(({ result }) => allowed.search(result.interval.low, result.interval.high).length == 0);
+
+  return result;
+}
+
 async function filter (client: Client, message: Message | PartialMessage): Promise<void> {
   // Always ignore self and non-guild messages
   if (message.author.id === client.user.id || message.channel.type === 'DM') {
@@ -42,15 +67,7 @@ async function filter (client: Client, message: Message | PartialMessage): Promi
     return;
   }
 
-  const sanitizedContent = sanitize(message.content).toLowerCase();
-  const allowed = new IntervalTree();
-  filterCollection.allowed.flatMap(filter => filter.match(sanitizedContent)).forEach(match => {
-    allowed.insert(match.interval.low, match.interval.high, null);
-  });
-  const forbidden = filterCollection.forbidden
-    .flatMap(filter => filter.match(sanitizedContent).map(result => ({ result, filter })))
-    .filter(({ result }) => allowed.search(result.interval.low, result.interval.high).length == 0);
-
+  const forbidden = applyFilters(filterCollection, message.content).applied;
   if (forbidden.length === 0) {
     return;
   }
@@ -474,6 +491,55 @@ export default {
             });
           }
         }
+      },
+      async test (client: Client, interaction: CommandInteraction) {
+        const input = interaction.options.getString('text', true);
+
+        const filterCollection = collections.get(interaction.guildId);
+        if (filterCollection === null || filterCollection.forbidden.length === 0) {
+          await interaction.reply({
+            embeds: [
+              buildEmbed(
+                'There are no filters configured for this server.',
+                'RED'
+              )
+            ]
+          });
+          return;
+        }
+
+        const sanitized = sanitize(input);
+        const result = applyFilters(filterCollection, input);
+        let message = `**Filter Result for**\n\`\`\`\n${sanitized}\n\`\`\`\n`;
+        const forbiddenList = result.forbidden.map(
+          ({
+            filter,
+            result
+          }) => ` • \`${result.word.replace('\n', '')}\` (\`${result.interval.low}-${result.interval.high}\`, ${filter.describe()})`
+        );
+        message += `**Forbidden Matches**\n${forbiddenList.length > 0 ? forbiddenList.join('\n') : '*None*'}\n\n`;
+        const allowedList = result.allowed.map(
+          ({
+            filter,
+            result
+          }) => ` • \`${result.word.replace('\n', '')}\` (\`${result.interval.low}-${result.interval.high}\`, ${filter.describe()})`
+        );
+        message += `**Allowed Matches**\n${allowedList.length > 0 ? allowedList.join('\n') : '*None*'}\n\n`;
+        const appliedFilters = Object.values(
+          result.applied.reduce(
+            (acc, { filter }) => {
+              const serialized = filter.toJSON();
+              acc[`${serialized.type}.${serialized.filter}`] = ` • ${filter.describe()}`;
+              return acc;
+            },
+            {} as Record<string, string>
+          )
+        ).join('\n');
+        message += `**Applied Filters**\n${result.applied.length > 0 ? appliedFilters : '*None*'}`;
+
+        await interaction.reply({
+          embeds: [buildEmbed(message)]
+        });
       },
       async 'set-logging-channel' (client: Client, interaction: CommandInteraction) {
         const channel = interaction.options.getChannel('channel', true);

@@ -272,6 +272,19 @@ const cmds: ApplicationCommandDataResolvable[] = [
       },
       {
         type: 'SUB_COMMAND',
+        name: 'test',
+        description: 'Test the filters against an example message',
+        options: [
+          {
+            type: 'STRING',
+            name: 'text',
+            description: 'The text to filter',
+            required: true
+          }
+        ]
+      },
+      {
+        type: 'SUB_COMMAND',
         name: 'set-logging-channel',
         description: 'Specify the channel where deletions should be logged',
         options: [
