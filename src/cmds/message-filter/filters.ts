@@ -24,7 +24,7 @@ export class RegexFilter implements MessageFilter {
   private readonly regex: RegExp;
 
   constructor (regex: RegExp) {
-    this.regex = new RegExp(regex, 'g');
+    this.regex = new RegExp(regex, 'gi');
   }
 
   match (content: string): Array<FilterResult> {
