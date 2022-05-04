@@ -79,7 +79,7 @@ class ChannelStorage {
     this.channels[channel][key] = value;
     this.cache[`${channel}.${key}`] = { expiry: Date.now() + CACHE_TTL, value: value };
 
-    this.guildStorage.set(this.guild, 'channels', this.channels);
+    this.guildStorage.set(this.guild, 'channels', this);
   }
 
   get<V> (channel: Snowflake, key: string, deserialize: (raw: any) => V = v => v, defaultValue: V | null = null): V | null {
@@ -108,7 +108,7 @@ class ChannelStorage {
     delete this.channels[channel][key];
     delete this.cache[`${channel}.${key}`];
 
-    this.guildStorage.set(this.guild, 'channels', this.channels);
+    this.guildStorage.set(this.guild, 'channels', this);
   }
 
   list<V> (key: string, deserialize: (raw: any) => V = v => v): { [channel: Snowflake]: V } {
