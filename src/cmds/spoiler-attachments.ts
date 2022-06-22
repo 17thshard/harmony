@@ -10,7 +10,7 @@ import {
   MessageButton,
   MessageComponentInteraction,
   MessageEditOptions,
-  MessageEmbed,
+  MessageEmbed, MessageOptions, MessagePayload,
   TextChannel
 } from 'discord.js';
 import { SimpleCommand } from '../commands';
@@ -121,7 +121,7 @@ export default {
         max: 1,
         time: TIMEOUT,
         errors: ['time']
-      }).then(m => ({ type: 'message', message: m.first() }));
+      }).then(m => ({ type: 'message', message: m.first() }) as MessageResult);
       const cancelPromise: Promise<CancelResult> = Promise.any([channel, promptMessage].map(source => source.awaitMessageComponent({
         filter: (i: ButtonInteraction) => {
           i.deferUpdate();
@@ -130,7 +130,7 @@ export default {
         },
         componentType: 'BUTTON',
         time: TIMEOUT
-      }).then(i => ({ type: 'cancel', interaction: i }))));
+      }).then(i => ({ type: 'cancel', interaction: i }) as CancelResult)));
 
       try {
         const result = await Promise.any<MessageResult | CancelResult>([messagePromise, cancelPromise]);
@@ -138,7 +138,7 @@ export default {
         await promptMessage.edit({ components: [] });
 
         if (result.type === 'cancel') {
-          const edit: MessageEditOptions = {
+          const edit: MessageOptions & MessageEditOptions = {
             embeds: [buildEmbed('The attachment process has been canceled.')],
             components: []
           };
@@ -223,7 +223,7 @@ export default {
           });
         }
 
-        const content: MessageEditOptions = {
+        const content: MessageOptions & MessageEditOptions = {
           embeds: [buildEmbed(message, 'RED')],
           components: []
         };

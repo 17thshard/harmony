@@ -43,7 +43,7 @@ const commands = modules.reduce<{ [name: string]: Command }>(
 
 client.once('ready', async () => {
   logger.info('Ready!');
-  client.user.setActivity({
+  client.user?.setActivity({
     type: 'WATCHING',
     name: 'YOU 👁👁'
   });
@@ -65,7 +65,7 @@ async function joinActiveThreads (guild: Guild) {
 }
 
 client.on('threadCreate', tryJoinThread);
-client.on('threadUpdate', (_, newThread) => tryJoinThread(newThread));
+client.on('threadUpdate', (_, newThread: ThreadChannel) => tryJoinThread(newThread));
 client.on('threadListSync', async threads => {
   await Promise.all(threads.map(tryJoinThread));
 });
@@ -112,10 +112,10 @@ client.on('interactionCreate', async interaction => {
 });
 
 modules.forEach((module) => {
-  if (module.additionalHandlers !== undefined) {
-    Object.keys(module.additionalHandlers).forEach(key => {
+  const additionalHandlers = module.additionalHandlers;
+  if (additionalHandlers !== undefined) {
+    Object.entries(additionalHandlers).forEach(([key, handle]) => {
       const typedKey = key as keyof ClientEvents;
-      const handle = module.additionalHandlers[typedKey];
 
       client.on(typedKey, async (...args) => {
         try {
