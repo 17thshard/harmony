@@ -1,4 +1,4 @@
-import { ApplicationCommandDataResolvable, ApplicationCommandOptionChoice, ApplicationCommandSubCommandData, Client } from 'discord.js';
+import { ApplicationCommandDataResolvable, ApplicationCommandOptionChoiceData, ApplicationCommandSubCommandData, Client } from 'discord.js';
 import logger from './utils/logger';
 
 const token = process.env.BOT_TOKEN;
@@ -7,7 +7,7 @@ if (token === undefined) {
   process.exit(1);
 }
 
-const filterTypes: ApplicationCommandOptionChoice[] = [
+const filterTypes: ApplicationCommandOptionChoiceData[] = [
   {
     name: 'Matches any message that contains the filter content verbatim',
     value: 'contains'

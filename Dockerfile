@@ -1,5 +1,7 @@
 FROM node:16-alpine AS base_node_modules
 
+RUN apk add --no-cache g++ make py3-pip
+
 WORKDIR /app
 COPY ./package.json ./package-lock.json /app/
 RUN npm install --omit dev
