@@ -1,4 +1,5 @@
 import {
+  ButtonInteraction,
   Client,
   Collection,
   ColorResolvable,
@@ -122,7 +123,7 @@ export default {
         errors: ['time']
       }).then(m => ({ type: 'message', message: m.first() }));
       const cancelPromise: Promise<CancelResult> = Promise.any([channel, promptMessage].map(source => source.awaitMessageComponent({
-        filter: i => {
+        filter: (i: ButtonInteraction) => {
           i.deferUpdate();
 
           return i.user.id === interaction.user.id && i.customId === 'cancel';

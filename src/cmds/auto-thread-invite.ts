@@ -1,9 +1,9 @@
 import { ComplexCommand } from '../commands';
 import {
-  Channel,
+  AnyChannel,
   Client,
   ColorResolvable,
-  CommandInteraction,
+  CommandInteraction, GuildChannel,
   MessageEmbed,
   Permissions,
   Role,
@@ -31,10 +31,10 @@ export default {
     'auto-thread-invite',
     {
       async start (client: Client, interaction: CommandInteraction) {
-        const channel = interaction.options.getChannel('channel', true);
+        const channel = client.channels.resolve(interaction.options.getChannel('channel', true).id) as GuildChannel;
         const role = interaction.options.getRole('role', true);
 
-        if (channel.type !== 'GUILD_TEXT') {
+        if (!channel.isText() || channel.isThread()) {
           await interaction.reply({
             embeds: [
               buildEmbed(
@@ -107,10 +107,10 @@ export default {
         });
       },
       async stop (client: Client, interaction: CommandInteraction) {
-        const channel = interaction.options.getChannel('channel', true);
+        const channel = client.channels.resolve(interaction.options.getChannel('channel', true).id) as GuildChannel;
         const role = interaction.options.getRole('role', true);
 
-        if (channel.type === 'GUILD_TEXT' && !channel.permissionsFor(interaction.user).has(Permissions.FLAGS.MANAGE_THREADS)) {
+        if (channel.isText() && !channel.permissionsFor(interaction.user).has(Permissions.FLAGS.MANAGE_THREADS)) {
           await interaction.reply({
             embeds: [
               buildEmbed(
@@ -143,7 +143,7 @@ export default {
           if (Object.keys(role.id).length === 0) {
             channelStorage.delete(channel.id, 'autoThreadInvite');
           } else {
-            channelStorage.set(channel.id, 'autoThreadinvite', storedRoles);
+            channelStorage.set(channel.id, 'autoThreadInvite', storedRoles);
           }
         } catch (error) {
           const sourceChannel = await client.channels.fetch(interaction.channelId) as TextChannel;
@@ -190,7 +190,7 @@ export default {
               acc[item.channel.id.toString()] = item.roles.map(role => ({ channel: item.channel, role }));
               return acc;
             },
-            {} as Record<string, Array<{ channel: Channel, role: Role }>>
+            {} as Record<string, Array<{ channel: AnyChannel, role: Role }>>
           );
 
           const instructionMessage = 'To start inviting role members to new threads in a channel, use the \`/auto-thread-invite start #channel @role\` command.\nTo stop inviting role members, use the \`/auto-thread-invite stop #channel @role\` command';
