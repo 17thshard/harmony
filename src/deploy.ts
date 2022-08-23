@@ -304,7 +304,9 @@ const cmds: ApplicationCommandDataResolvable[] = [
 
 const client = new Client({ intents: [] });
 client.once('ready', async () => {
-  await client.application.commands.set(cmds);
+  const guildId = process.env.HARMONY_DEPLOY_GUILD;
+  if (guildId) await (await client.guilds.fetch(guildId)).commands.set(cmds);
+  else await client.application.commands.set(cmds);
   console.log('All commands deployed');
   client.destroy();
 });
