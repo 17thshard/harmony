@@ -23,7 +23,7 @@ const client = new Client({
   ]
 });
 
-interface Module {
+export interface Module {
   command?: Command;
   additionalHandlers?: Partial<{ [K in keyof ClientEvents]: (client: Client, ...args: ClientEvents[K]) => Awaitable<void> }>;
 }
