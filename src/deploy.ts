@@ -1,4 +1,4 @@
-import { APIApplicationCommandSubcommandOption, ApplicationCommandDataResolvable, ApplicationCommandOptionChoiceData, ApplicationCommandOptionType, ApplicationCommandType, Client, PermissionFlagsBits } from 'discord.js';
+import { APIApplicationCommandSubcommandOption, ApplicationCommandDataResolvable, ApplicationCommandOptionChoiceData, ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Client, PermissionFlagsBits } from 'discord.js';
 import logger from './utils/logger';
 
 const token = process.env.BOT_TOKEN;
@@ -299,7 +299,50 @@ const cmds: ApplicationCommandDataResolvable[] = [
         ]
       }
     ]
-  }
+  },
+  {
+    type: ApplicationCommandType.ChatInput,
+    name: 'manage-channel-starboard',
+    default_permission: false,
+    description: 'Manage the starboard thread for a channel',
+    options: [
+      {
+        type: ApplicationCommandOptionType.Subcommand,
+        name: 'set',
+        description: 'Set the starboard thread for a channel',
+        options: [
+          {
+            type: ApplicationCommandOptionType.Channel,
+            channel_types: [ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildNewsThread],
+            name: 'thread',
+            description: 'Starboard thread for the channel',
+            required: true,
+          },
+          {
+            name: 'channel',
+            description: 'Channel to manage',
+            type: ApplicationCommandOptionType.Channel,
+            channel_types: [ChannelType.GuildText, ChannelType.GuildNews],
+            required: false,
+          },
+        ]
+      },
+      {
+        type: ApplicationCommandOptionType.Subcommand,
+        name: 'remove',
+        description: 'Remove the starboard thread for the channel',
+        options: [
+          {
+            name: 'channel',
+            description: 'Channel to manage',
+            type: ApplicationCommandOptionType.Channel,
+            channel_types: [ChannelType.GuildText, ChannelType.GuildNews],
+            required: false,
+          },
+        ]
+      },
+    ]
+  },
 ];
 
 const client = new Client({ intents: [] });
