@@ -1,4 +1,4 @@
-import { ActivityType, Awaitable, Client, ClientEvents, FetchedThreads, Guild, TextChannel, ThreadChannel } from 'discord.js';
+import { ActivityType, Awaitable, Client, ClientEvents, FetchedThreads, Guild, Partials, TextChannel, ThreadChannel } from 'discord.js';
 import autoPublish from './cmds/auto-publish';
 import spoilerAttachments from './cmds/spoiler-attachments';
 import autoThreadInvite from './cmds/auto-thread-invite';
@@ -20,7 +20,14 @@ const client = new Client({
     'GuildMessages',
     'DirectMessages',
     'MessageContent',
-  ]
+    'GuildMessageReactions',
+  ],
+  
+  partials: [
+    Partials.Reaction,
+    Partials.User,
+    Partials.Message,
+  ],
 });
 
 export interface Module {
