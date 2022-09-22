@@ -4,6 +4,7 @@ import spoilerAttachments from './cmds/spoiler-attachments';
 import autoThreadInvite from './cmds/auto-thread-invite';
 import rawMessage from './cmds/raw-message';
 import messageFilter from './cmds/message-filter';
+import channelStarboard from './cmds/channel-starboard';
 import { Command } from './commands';
 import logger from './utils/logger';
 
@@ -35,7 +36,14 @@ export interface Module {
   additionalHandlers?: Partial<{ [K in keyof ClientEvents]: (client: Client, ...args: ClientEvents[K]) => Awaitable<void> }>;
 }
 
-const modules: Module[] = [autoPublish, spoilerAttachments, autoThreadInvite, rawMessage, messageFilter];
+const modules: Module[] = [
+  autoPublish,
+  spoilerAttachments,
+  autoThreadInvite,
+  rawMessage,
+  messageFilter,
+  channelStarboard,
+];
 const commands = modules.reduce<{ [name: string]: Command }>(
   (acc, module) => {
     if (module.command === undefined) {
