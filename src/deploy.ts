@@ -303,7 +303,7 @@ const cmds: ApplicationCommandDataResolvable[] = [
   {
     type: ApplicationCommandType.ChatInput,
     name: 'manage-channel-starboard',
-    default_permission: false,
+    defaultMemberPermissions: PermissionFlagsBits.ManageChannels,
     description: 'Manage the starboard thread for a channel',
     options: [
       {
@@ -313,7 +313,7 @@ const cmds: ApplicationCommandDataResolvable[] = [
         options: [
           {
             type: ApplicationCommandOptionType.Channel,
-            channel_types: [ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildNewsThread],
+            channelTypes: [ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildNewsThread],
             name: 'thread',
             description: 'Starboard thread for the channel',
             required: true,
@@ -322,7 +322,7 @@ const cmds: ApplicationCommandDataResolvable[] = [
             name: 'channel',
             description: 'Channel to manage',
             type: ApplicationCommandOptionType.Channel,
-            channel_types: [ChannelType.GuildText, ChannelType.GuildNews],
+            channelTypes: [ChannelType.GuildText, ChannelType.GuildNews],
             required: false,
           },
         ]
@@ -336,7 +336,7 @@ const cmds: ApplicationCommandDataResolvable[] = [
             name: 'channel',
             description: 'Channel to manage',
             type: ApplicationCommandOptionType.Channel,
-            channel_types: [ChannelType.GuildText, ChannelType.GuildNews],
+            channelTypes: [ChannelType.GuildText, ChannelType.GuildNews],
             required: false,
           },
         ]
