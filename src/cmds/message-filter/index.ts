@@ -14,6 +14,10 @@ const collections = guilds.view<FilterCollection>(
 );
 const exemptions = guilds.view<Array<MessageFilterExemption>>('messageFilter.exemptions', raw => raw.map(deserializeExemption));
 
+function isEnabled(guildId: Snowflake) {
+  return guilds.get(guildId, 'messageFilter.enabled', v => v, true);
+}
+
 function buildEmbed (message: string, color?: ColorResolvable): EmbedBuilder {
   const embed = new EmbedBuilder()
     .setTitle('Message Filter')
@@ -54,6 +58,10 @@ function applyFilters (
 async function filter (client: Client, message: Message | PartialMessage): Promise<void> {
   // Always ignore self and non-guild messages
   if (message.author.id === client.user.id || message.channel.isDMBased()) {
+    return;
+  }
+
+  if (!isEnabled(message.guildId)) {
     return;
   }
 
@@ -297,6 +305,26 @@ export default {
   command: new ComplexCommand(
     'message-filter',
     {
+      async state (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
+        const currentState = isEnabled(interaction.guildId);
+
+        if (currentState) {
+          await interaction.reply({ embeds: [buildEmbed('Message filtering is currently enabled for this server!')] });
+        } else {
+          await interaction.reply({ embeds: [buildEmbed('Message filtering is currently disabled for this server!')] });
+        }
+      },
+      async toggle (client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
+        const currentState = isEnabled(interaction.guildId);
+        const newState = !currentState;
+        guilds.set(interaction.guildId, 'messageFilter.enabled', newState);
+
+        if (newState) {
+          await interaction.reply({ embeds: [buildEmbed('Message filtering is now enabled for this server!')] });
+        } else {
+          await interaction.reply({ embeds: [buildEmbed('Message filtering is now disabled for this server!')] });
+        }
+      },
       forbidden: buildFilterManagement('forbidden'),
       allowed: buildFilterManagement('allowed'),
       exemptions: {

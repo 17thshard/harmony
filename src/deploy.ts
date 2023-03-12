@@ -205,6 +205,16 @@ const cmds: ApplicationCommandDataResolvable[] = [
     description: 'Manage message filters for this server',
     options: [
       {
+        type: ApplicationCommandOptionType.Subcommand,
+        name: 'state',
+        description: 'Check the state of message filtering for current server',
+      },
+      {
+        type: ApplicationCommandOptionType.Subcommand,
+        name: 'toggle',
+        description: 'En- or disable message filtering for current server',
+      },
+      {
         type: ApplicationCommandOptionType.SubcommandGroup,
         name: 'forbidden',
         description: 'Manage forbidden words and phrases',
