@@ -1,5 +1,3 @@
-import { escape } from '../../utils/message-utils';
-
 export interface MessageFilter {
   match (content: string): Array<FilterResult>;
 
@@ -35,7 +33,7 @@ export class RegexFilter implements MessageFilter {
   }
 
   describe (): string {
-    return `Matches \`/${escape(this.regex.source)}/\``;
+    return `Matches \`/${this.regex.source}/\``;
   }
 
   toJSON (): SerializedFilter {
@@ -52,7 +50,7 @@ export class ContainsFilter extends RegexFilter {
   }
 
   describe (): string {
-    return `Contains \`${escape(this.search)}\``;
+    return `Contains \`${this.search}\``;
   }
 
   toJSON (): SerializedFilter {
@@ -69,7 +67,7 @@ export class WordFilter extends RegexFilter {
   }
 
   describe (): string {
-    return `Contains \`${escape(this.word)}\` surrounded by word boundaries`;
+    return `Contains \`${this.word}\` surrounded by word boundaries`;
   }
 
   toJSON (): SerializedFilter {
