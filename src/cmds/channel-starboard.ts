@@ -1,6 +1,6 @@
 import { ButtonBuilder } from '@discordjs/builders';
-import { ButtonStyle, ComponentType } from 'discord-api-types/v10';
-import { Channel, ChatInputCommandInteraction, GuildChannel, Snowflake, Webhook, WebhookMessageOptions } from 'discord.js';
+import { APIActionRowComponent, APIMessageActionRowComponent, ButtonStyle, ComponentType } from 'discord-api-types/v10';
+import { Channel, ChatInputCommandInteraction, GuildChannel, Snowflake, Webhook, WebhookMessageCreateOptions } from 'discord.js';
 import { Module } from '../bot';
 import { ComplexCommand } from '../commands';
 import logger from '../utils/logger';
@@ -9,6 +9,7 @@ import { guilds as storage } from '../utils/storage';
 const threadStorageKey = 'starboard-thread';
 const webhookStorageKey = 'starboard-webhook';
 
+type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
 type WebhookCapableChannel = Extract<Channel, { fetchWebhooks(): unknown }>;
 type ThreadsCapableChannel = Extract<Channel, { threads: unknown }>;
 type StarboardCapableChannel = WebhookCapableChannel & ThreadsCapableChannel;
@@ -96,7 +97,7 @@ export default {
       // easy to abuse, but this is meant for internal use atm so can assume good faith
       reaction = reaction.partial ? await reaction.fetch() : reaction;
       if (reaction.count !== 1) return;
-      
+
       const message = reaction.message.partial ? await reaction.message.fetch(true) : reaction.message;
       logger.info({
         message: `Pinning a message at the behest of ${pinner.tag}...`,
@@ -130,7 +131,7 @@ export default {
         avatarURL = author.displayAvatarURL();
       }
 
-      const clonedMessage: WebhookMessageOptions = {
+      const clonedMessage: DeepWriteable<WebhookMessageCreateOptions> = {
         username,
         avatarURL,
         allowedMentions: { roles: [], users: [], },
@@ -160,8 +161,8 @@ export default {
 
       // assume it's valid because it has to be checked before a thread is stored
       const channel = await client.channels.fetch(channelId) as StarboardCapableChannel;
-      await getUsableWebhook(channel).then(wh => wh.send(clonedMessage));
-      
+      await getUsableWebhook(channel).then(wh => wh.send(clonedMessage as WebhookMessageCreateOptions));
+
       await notificationMessage.edit({
         content: `<@${pinner.id}> pinned this message to this channel's starboard. See all pinned messages: <#${starThreadId}>`,
         allowedMentions: { users: [] },

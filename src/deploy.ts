@@ -353,6 +353,18 @@ const cmds: ApplicationCommandDataResolvable[] = [
       },
     ]
   },
+  {
+    type: ApplicationCommandType.Message,
+    name: 'Edit Webhook Message',
+    defaultMemberPermissions: PermissionFlagsBits.ManageMessages,
+    dmPermission: false,
+  },
+  {
+    type: ApplicationCommandType.Message,
+    name: 'Add Channel Directions',
+    defaultMemberPermissions: PermissionFlagsBits.ManageMessages,
+    dmPermission: false,
+  },
 ];
 
 const client = new Client({ intents: [] });

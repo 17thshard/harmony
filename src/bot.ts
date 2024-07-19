@@ -5,6 +5,7 @@ import autoThreadInvite from './cmds/auto-thread-invite';
 import rawMessage from './cmds/raw-message';
 import messageFilter from './cmds/message-filter';
 import channelStarboard from './cmds/channel-starboard';
+import editWebhook from './cmds/edit-webhook';
 import { Command } from './commands';
 import logger from './utils/logger';
 
@@ -23,7 +24,7 @@ const client = new Client({
     'MessageContent',
     'GuildMessageReactions',
   ],
-  
+
   partials: [
     Partials.Reaction,
     Partials.User,
@@ -31,8 +32,15 @@ const client = new Client({
   ],
 });
 
-export interface Module {
+interface SingleCommandModule {
   command?: Command;
+}
+
+interface MultiCommandModule {
+  commands: Command[];
+}
+
+export type Module = (SingleCommandModule | MultiCommandModule) & {
   additionalHandlers?: Partial<{ [K in keyof ClientEvents]: (client: Client, ...args: ClientEvents[K]) => Awaitable<void> }>;
 }
 
@@ -43,19 +51,27 @@ const modules: Module[] = [
   rawMessage,
   messageFilter,
   channelStarboard,
+  editWebhook,
 ];
-const commands = modules.reduce<{ [name: string]: Command }>(
-  (acc, module) => {
+const commands = modules
+  .flatMap((module) => {
+    if ('commands' in module) {
+      return module.commands;
+    }
     if (module.command === undefined) {
-      return acc;
+      return [];
     }
 
-    acc[module.command.name] = module.command;
+    return [module.command];
+  })
+  .reduce(
+    (acc, command) => {
+      acc[command.name] = command;
 
-    return acc;
-  },
-  {}
-);
+      return acc;
+    },
+    {} as Record<string, Command>
+  );
 
 client.once('ready', async () => {
   logger.info('Ready!');
@@ -73,11 +89,8 @@ async function tryJoinThread (thread: ThreadChannel) {
 }
 
 async function joinActiveThreads (guild: Guild) {
-  let activeThreads: FetchedThreads;
-  do {
-    activeThreads = await guild.channels.fetchActiveThreads();
-    await Promise.all(activeThreads.threads.map(tryJoinThread));
-  } while (activeThreads.hasMore);
+  const activeThreads = await guild.channels.fetchActiveThreads();
+  await Promise.all(activeThreads.threads.map(tryJoinThread));
 }
 
 client.on('threadCreate', tryJoinThread);

@@ -14,7 +14,7 @@ import {
   MessageActionRowComponentBuilder,
   MessageComponentInteraction,
   MessageEditOptions,
-  MessageOptions,
+  MessageCreateOptions,
   TextChannel,
 } from 'discord.js';
 import { SimpleCommand } from '../commands';
@@ -143,7 +143,7 @@ export default {
         await promptMessage.edit({ components: [] });
 
         if (result.type === 'cancel') {
-          const edit: MessageOptions & MessageEditOptions = {
+          const edit: MessageCreateOptions & MessageEditOptions = {
             embeds: [buildEmbed('The attachment process has been canceled.')],
             components: []
           };
@@ -228,7 +228,7 @@ export default {
           });
         }
 
-        const content: MessageOptions & MessageEditOptions = {
+        const content: MessageCreateOptions & MessageEditOptions = {
           embeds: [buildEmbed(message, 'Red')],
           components: []
         };
