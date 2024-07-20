@@ -2,6 +2,8 @@ import { ActionRowBuilder, ChannelSelectMenuBuilder, ModalActionRowComponentBuil
 import { ChannelType, ComponentType, Snowflake, TextInputStyle } from 'discord-api-types/v10';
 import {
   Client,
+  DiscordjsError,
+  DiscordjsErrorCodes,
   MessageContextMenuCommandInteraction,
   ModalBuilder,
   ModalSubmitInteraction,
@@ -56,11 +58,21 @@ export default {
         await interaction.showModal(modal);
 
         const filter = (interaction: ModalSubmitInteraction) => interaction.customId === modalId;
-        const answer = await interaction.awaitModalSubmit({
-          filter,
-          time: 300_000
-        });
-        const newContent = answer.fields.getTextInputValue('content').trim();
+        let newContent = message.content;
+        let answer: ModalSubmitInteraction<'cached'>;
+        try {
+          answer = await interaction.awaitModalSubmit({
+            filter,
+            time: 10_000
+          });
+          newContent = answer.fields.getTextInputValue('content').trim();
+          await answer.deferReply({ ephemeral: true });
+        } catch (error) {
+          if (error instanceof DiscordjsError && error.code === DiscordjsErrorCodes.InteractionCollectorError) {
+            return;
+          }
+          throw error;
+        }
 
         try {
           await webhook.editMessage(interaction.targetMessage, { content: newContent });
@@ -78,7 +90,7 @@ export default {
           return;
         }
 
-        await answer.reply({ content: 'Webhook message succesfully edited', ephemeral: true });
+        await answer.reply({ content: 'Webhook message successfully edited', ephemeral: true });
       }
     ),
     new SimpleCommand(
@@ -104,7 +116,16 @@ export default {
               .setChannelTypes(ChannelType.GuildText, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildForum)
           );
         const reply = await interaction.editReply({ content: 'Which channel should conversation be directed to?', components: [row] });
-        const targetChannel = (await reply.awaitMessageComponent({ componentType: ComponentType.ChannelSelect })).values[0];
+        let targetChannel: string;
+        try {
+          targetChannel = (await reply.awaitMessageComponent({ componentType: ComponentType.ChannelSelect, time: 60_000 })).values[0];
+        } catch (error) {
+          if (error instanceof DiscordjsError && error.code === DiscordjsErrorCodes.InteractionCollectorError) {
+            await interaction.editReply({ content: 'Did not receive response in time!', components: [] });
+            return;
+          }
+          throw error;
+        }
         let content = message.content;
         const cta = `-# Want to talk about this? Go to <#${targetChannel}>!`;
         const regex = /^-# Want to talk about this\? Go to <#[0-9]+>!/m;
@@ -130,7 +151,7 @@ export default {
           return;
         }
 
-        await interaction.editReply({ content: 'Webhook message succesfully edited', components: [] });
+        await interaction.editReply({ content: 'Webhook message successfully edited', components: [] });
       }
     )
   ]

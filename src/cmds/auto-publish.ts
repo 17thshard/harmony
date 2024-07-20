@@ -1,5 +1,16 @@
 import { ComplexCommand } from '../commands';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, Client, ColorResolvable, EmbedBuilder, Message, TextChannel } from 'discord.js';
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelType,
+  ChatInputCommandInteraction,
+  Client,
+  ColorResolvable,
+  EmbedBuilder,
+  Message,
+  TextChannel
+} from 'discord.js';
 import { guilds as storage } from '../utils/storage';
 import logger from '../utils/logger';
 
@@ -21,7 +32,7 @@ async function publishMessage(message: Message): Promise<boolean> {
     return true;
   }
 
-  if (message.channel.type !== ChannelType.GuildNews) return;
+  if (!message.crosspostable || message.channel.isDMBased()) return;
   const channelName = `#${message.channel.name}`;
 
   try {
@@ -67,7 +78,7 @@ export default {
       async start(client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
         const channel = interaction.options.getChannel('channel', true);
 
-        if (channel.type !== ChannelType.GuildNews) {
+        if (channel.type !== ChannelType.GuildAnnouncement) {
           await interaction.reply({
             embeds: [
               buildEmbed(
@@ -123,7 +134,7 @@ export default {
       async stop(client: Client, interaction: ChatInputCommandInteraction<'cached'>) {
         const channel = interaction.options.getChannel('channel', true);
 
-        if (channel.type === ChannelType.GuildNews && !channel.permissionsFor(interaction.user).has('ManageMessages')) {
+        if (channel.type === ChannelType.GuildAnnouncement && !channel.permissionsFor(interaction.user).has('ManageMessages')) {
           await interaction.reply({
             embeds: [
               buildEmbed(
@@ -204,7 +215,7 @@ export default {
   ),
   additionalHandlers: {
     async messageCreate(client: Client, message: Message): Promise<void> {
-      if (message.channel.type !== ChannelType.GuildNews) {
+      if (!message.crosspostable || message.channel.isDMBased()) {
         return;
       }
 
