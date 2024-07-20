@@ -63,7 +63,7 @@ export default {
         try {
           answer = await interaction.awaitModalSubmit({
             filter,
-            time: 10_000
+            time: 300_000
           });
           newContent = answer.fields.getTextInputValue('content').trim();
           await answer.deferReply({ ephemeral: true });
