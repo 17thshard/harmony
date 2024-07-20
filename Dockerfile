@@ -1,4 +1,4 @@
-FROM node:16-alpine AS base_node_modules
+FROM node:20.15-alpine AS base_node_modules
 
 RUN apk add --no-cache g++ make py3-pip
 
@@ -12,7 +12,7 @@ RUN npm install
 COPY . /app
 RUN npm run build
 
-FROM node:16-alpine
+FROM node:20.15-alpine
 
 WORKDIR /app
 

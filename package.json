@@ -34,23 +34,23 @@
         "@discordjs/builders": "^1.8.2",
         "discord-api-types": "^0.37.92",
         "discord.js": "^14.15.3",
-        "keyv": "^4.0.3",
+        "keyv": "^4.5.4",
         "keyv-file": "^0.2.0",
         "node-interval-tree": "^1.3.3",
         "simple-markdown": "^0.7.3",
-        "utf-8-validate": "^5.0.9",
-        "winston": "^3.3.3",
-        "zlib-sync": "^0.1.7"
+        "utf-8-validate": "^5.0.10",
+        "winston": "^3.13.1",
+        "zlib-sync": "^0.1.9"
     },
     "devDependencies": {
-        "@types/core-js": "^2.5.5",
-        "@types/keyv": "^3.1.3",
+        "@types/core-js": "^2.5.8",
+        "@types/keyv": "^3.1.4",
         "@typescript-eslint/eslint-plugin": "^7.16.1",
         "@typescript-eslint/parser": "^7.16.1",
-        "concurrently": "^6.2.2",
-        "eslint": "^8.56.0",
-        "nodemon": "^2.0.13",
-        "ts-node": "^10.2.1",
+        "concurrently": "^6.5.1",
+        "eslint": "^8.57.0",
+        "nodemon": "^2.0.22",
+        "ts-node": "^10.9.2",
         "typescript": "^5.5.3"
     }
 }
