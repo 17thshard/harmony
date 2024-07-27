@@ -66,7 +66,6 @@ export default {
             time: 300_000
           });
           newContent = answer.fields.getTextInputValue('content').trim();
-          await answer.deferReply({ ephemeral: true });
         } catch (error) {
           if (error instanceof DiscordjsError && error.code === DiscordjsErrorCodes.InteractionCollectorError) {
             return;
