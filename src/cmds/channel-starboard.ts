@@ -108,10 +108,10 @@ export default {
         }
       });
 
-      const notificationMessage = await message.reply({
-        content: 'Pinning...',
-        allowedMentions: { users: [] },
-      });
+      //const notificationMessage = await message.reply({
+      //  content: 'Pinning...',
+      //  allowedMentions: { users: [] },
+      //});
 
       let username, avatarURL;
       if (message.webhookId) {
@@ -163,10 +163,10 @@ export default {
       const channel = await client.channels.fetch(channelId) as StarboardCapableChannel;
       await getUsableWebhook(channel).then(wh => wh.send(clonedMessage as WebhookMessageCreateOptions));
 
-      await notificationMessage.edit({
-        content: `<@${pinner.id}> pinned this message to this channel's starboard. See all pinned messages: <#${starThreadId}>`,
-        allowedMentions: { users: [] },
-      });
+      //await notificationMessage.edit({
+      //  content: `<@${pinner.id}> pinned this message to this channel's starboard. See all pinned messages: <#${starThreadId}>`,
+      //  allowedMentions: { users: [] },
+      //});
     }
   }
 } as Module;
