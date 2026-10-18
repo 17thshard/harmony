@@ -18,7 +18,7 @@ if (token === undefined) {
 const client = new Client({
   intents: [
     'Guilds',
-    'GuildMembers',
+    // 'GuildMembers',
     'GuildMessages',
     'DirectMessages',
     'MessageContent',
